@@ -1,26 +1,21 @@
-# Firestore Security Specification
+# Security Specification - Team Management
 
-## 1. Data Invariants
-- **Chamados**: Must belong to the user who created it (`createdByUid`).
-- **Agenda**: Users can only edit their own agenda (`uid`).
-- **CDs**: Publicly readable, admin only write.
-- **Acessos**: Append only (create only).
+## Data Invariants
+1. A connection test document must be readable by anyone (anonymous or authenticated) to verify system uptime.
+2. Users can only read their own user profile or profiles they have permission for (currently allowing all signed-in users read access to `/usuarios/` for team visibility, but this should be hardened).
+3. Access logs (`acessos`) are write-only for users; only admins can read.
+4. Active agendas and performance records are readable by any authenticated user in the current setup, but should be restricted by identity in future.
 
-## 2. The "Dirty Dozen" Payloads (Red Team Test Cases)
-1. **Identity Spoofing**: Attempt to create a chamado with `createdByUid` of another user. -> **PERMISSION_DENIED**
-2. **Resource Poisoning**: Create a CD with a 2MB 'nome' field. -> **PERMISSION_DENIED**
-3. **State Shortcutting**: Update a chamado's `status` to 'CONCLUIDO' without being the owner or admin. -> **PERMISSION_DENIED**
-4. **Shadow Update**: Update an agenda doc with an extra `isVerified: true` field. -> **PERMISSION_DENIED**
-5. **PII Leak**: Read the entire `usuarios` collection as a guest. -> **PERMISSION_DENIED**
-6. **Orphaned Write**: Create a chamado referencing a non-existent CD. -> **PERMISSION_DENIED**
-7. **Bypassing App Logic**: Try to delete an agenda entry of another user. -> **PERMISSION_DENIED**
-8. **Denial of Wallet**: Deeply nested document ID in `agenda_dias`. -> **PERMISSION_DENIED**
-9. **Role Escalation**: Add self to an `admins` collection (if it existed). -> **PERMISSION_DENIED**
-10. **Timestamp Fraud**: Create a chamado with a `createdAt` in the past (client-provided). -> **PERMISSION_DENIED**
-11. **Malicious Query**: List all chamados without filtering by `createdByUid`. -> **PERMISSION_DENIED**
-12. **Metadata Tampering**: Change `updatedAt` to a static string instead of server timestamp. -> **PERMISSION_DENIED**
-
-## 3. Implementation Plan
-- Define `isSignedIn()` and `isValidId()`.
-- Define entity validators for `Chamado`, `AgendaDia`, `CD`.
-- Implement Master Gate pattern.
+## The Dirty Dozen Payloads (Rejection Targets)
+1. Write to `/cds/connection-test` as any user.
+2. Read from `/acessos/` as any user.
+3. Create an access log with a spoofed `criadoEm` (not equal to `request.time`).
+4. Create an access log with a non-string `usuario`.
+5. Update a user profile without being signed in.
+6. Delete a record from `/cds/`.
+7. Write to `/agenda_dias/` with a 1MB string as ID.
+8. Read PII from `/usuarios/` anonymously.
+9. Bypass `isValidId` with special characters in the ID.
+10. Shadow update a profile with a `isAdmin` field (not defined).
+11. Create a record in `chamados` without being signed in.
+12. List all `acessos` records.
