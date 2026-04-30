@@ -1,7 +1,7 @@
 // ../js/criar-agenda.js
 import { db } from "./firebase.js";
 import {
-  collection, getDocs, query, where,
+  collection, getDocs, query, where, limit,
   doc, writeBatch, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -403,46 +403,82 @@ async function loadCDsToDatalist() {
 ========================= */
 async function loadMonthFromFirestore(yyyyMM) {
   if (!yyyyMM) return;
+  if (!db) {
+    console.error("[LOAD] Erro: Firebase não inicializado (db é nulo)");
+    setStatus("Erro: Firebase OFFLINE");
+    return;
+  }
+
   setStatus("Sincronizando do Firebase...");
-  console.log(`[LOAD] Iniciando carga - Mês: ${yyyyMM}, Usuário: ${usuarioNome}, Key: ${usuarioKey}`);
+  console.log(`%c[LOAD] Sincronização iniciada para ${yyyyMM}`, "color: #3b82f6; font-weight: bold;");
   
   try {
     const coll = collection(db, AGENDA_COLLECTION);
-    
-    // Consultas mais amplas para garantir que pegamos os dados mesmo se campos faltarem
-    const queries = [
-      query(coll, where("uidKey", "==", usuarioKey)),
-      query(coll, where("usuarioNome", "==", usuarioNome)),
-      query(coll, where("analyst", "==", usuarioNome))
-    ];
-
-    const results = await Promise.allSettled(queries.map(q => getDocs(q)));
     const map = {};
+
+    // 1. Tentar descobrir o UID do usuário para chaves exatas
+    let detectedUid = null;
+    try {
+      const uSnap = await getDocs(query(collection(db, "usuarios"), where("nome", "==", usuarioNome)));
+      uSnap.forEach(d => detectedUid = d.id);
+      
+      if (!detectedUid) {
+        const uSnap2 = await getDocs(query(collection(db, "users"), where("name", "==", usuarioNome)));
+        uSnap2.forEach(d => detectedUid = d.id);
+      }
+      
+      if (detectedUid) console.log(`[LOAD] UID detectado para ${usuarioNome}: ${detectedUid}`);
+    } catch (e) {
+      console.warn("[LOAD] Falha ao buscar UID nas coleções de usuários", e);
+    }
+
+    // 2. Chaves de pesquisa abrangentes
+    const queries = [];
+    if (detectedUid) queries.push(query(coll, where("uid", "==", detectedUid)));
+    if (usuarioKey) {
+      queries.push(query(coll, where("uidKey", "==", usuarioKey)));
+      queries.push(query(coll, where("usuarioKey", "==", usuarioKey)));
+    }
+    queries.push(query(coll, where("usuarioNome", "==", usuarioNome)));
+    queries.push(query(coll, where("analyst", "==", usuarioNome)));
+    queries.push(query(coll, where("analista", "==", usuarioNome)));
+    queries.push(query(coll, where("nome", "==", usuarioNome)));
+
+    // 3. Execução paralela das consultas
+    const results = await Promise.allSettled(queries.map(q => getDocs(q)));
     let totalDocsRaw = 0;
+    const processedIds = new Set();
 
     results.forEach((res, idx) => {
       if (res.status === "fulfilled") {
         totalDocsRaw += res.value.size;
         res.value.forEach(d => {
+          if (processedIds.has(d.id)) return;
+          processedIds.add(d.id);
+
           const data = d.data();
           
-          // Filtro por mês em memória para maior flexibilidade
-          const itemMonth = data.yyyyMM || data.monthKey || (data.data && data.data.substring(0, 7)) || (data.date && data.date.substring(0, 7));
+          // Compatibilidade com múltiplos nomes de campo para o Mês
+          const itemMonth = data.yyyyMM || data.monthKey || 
+                           (data.data && typeof data.data === 'string' && data.data.substring(0, 7)) || 
+                           (data.date && typeof data.date === 'string' && data.date.substring(0, 7)) ||
+                           (data.dia && typeof data.dia === 'string' && data.dia.substring(0, 7));
           
           if (itemMonth === yyyyMM) {
-            console.log(`[LOAD] Item compatível encontrado no doc ${d.id}`);
+            console.log(`[LOAD] Doc compatível ${d.id}:`, data);
             
-            // Suporte a formato de documento único por mês (dias: { date: { ... } })
+            // Formato Consolidado (campo 'dias')
             if (data.dias && typeof data.dias === "object") {
               Object.entries(data.dias).forEach(([dt, val]) => {
-                map[dt] = { ...val, data: dt };
+                const key = dt.substring(0, 10);
+                map[key] = { ...val, data: key };
               });
-            } 
-            // Suporte a formato de um documento por dia (data: 'YYYY-MM-DD')
-            else {
-              const dt = data.data || data.date || d.id.split("_")[1] || d.id;
-              if (dt && dt.length >= 10) {
-                map[dt.substring(0, 10)] = data;
+            } else {
+              // Formato individual (um doc por dia)
+              const dt = data.data || data.date || data.dia || (d.id.includes("_") ? d.id.split("_")[1] : d.id);
+              if (dt && typeof dt === "string" && dt.length >= 10) {
+                const key = dt.substring(0, 10);
+                map[key] = data;
               }
             }
           }
@@ -450,9 +486,9 @@ async function loadMonthFromFirestore(yyyyMM) {
       }
     });
 
-    console.log(`[LOAD] Total de documentos brutos processados: ${totalDocsRaw}`);
-    console.log(`[LOAD] Itens mapeados para o mês ${yyyyMM}: ${Object.keys(map).length}`);
+    console.log(`[LOAD] Documentos analisados: ${totalDocsRaw} | Itens únicos no mês ${yyyyMM}: ${Object.keys(map).length}`);
 
+    // 4. Preencher a tabela
     const rows = [...tbody.querySelectorAll("tr[data-date]")];
     let loadedCount = 0;
     
@@ -466,9 +502,12 @@ async function loadMonthFromFirestore(yyyyMM) {
       const actSel = tr.querySelector("[data-field='atividade']");
       const obsTxt = tr.querySelector("[data-field='obs']");
 
-      if (cdInp) cdInp.value = saved.cd || saved.CD || "";
-      if (actSel) actSel.value = saved.atividade || saved.Atividade || "";
-      if (obsTxt) obsTxt.value = saved.obs || saved.Obs || saved.observacoes || saved.observacao || saved.Observação || "";
+      if (cdInp) cdInp.value = saved.cd || saved.CD || saved.centro_distribuicao || "";
+      if (actSel) actSel.value = saved.atividade || saved.Atividade || saved.tipo_atividade || "";
+      
+      // Múltiplos nomes para observações
+      const obsValue = saved.obs || saved.Obs || saved.observacoes || saved.observacao || saved.Observação || "";
+      if (obsTxt) obsTxt.value = obsValue;
       
       updateValidationUI(cdInp);
       loadedCount++;
@@ -477,14 +516,23 @@ async function loadMonthFromFirestore(yyyyMM) {
     if (loadedCount > 0) {
       setStatus(`${loadedCount} dias carregados`);
       setMsg("Agenda sincronizada com sucesso.", "success");
-      console.log(`[LOAD] Sucesso: ${loadedCount} linhas preenchidas na tabela.`);
     } else {
-      setStatus("Nenhum dado salvo");
-      console.warn(`[LOAD] Nenhum dado compatível com a tabela do mês ${yyyyMM} foi encontrado.`);
+      setStatus("Nenhum dado encontrado");
+      if (totalDocsRaw === 0) {
+        console.log("%c[LOAD] Tentando busca de emergência (sample) para entender o banco...", "color: orange");
+        try {
+           const sample = await getDocs(query(coll, limit(5)));
+           if (sample.empty) console.log("[LOAD] A coleção 'agenda_dias' parece estar vazia.");
+           else {
+             console.log("[LOAD] Amostra de documentos no banco (ID - Campos):");
+             sample.forEach(s => console.log(` - ${s.id}:`, Object.keys(s.data())));
+           }
+        } catch(e) {}
+      }
     }
   } catch (err) {
     console.error("[LOAD] Erro crítico:", err);
-    setStatus("Erro ao carregar");
+    setStatus("Erro conexão");
   }
 }
 
