@@ -2,41 +2,22 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-async function getFirebaseConfig() {
-  try {
-    // Tentar múltiplos caminhos para garantir que encontre o JSON
-    const paths = ["/firebase-applet-config.json", "../../firebase-applet-config.json", "./firebase-applet-config.json"];
-    for (const path of paths) {
-      try {
-        console.log(`[FIREBASE] Tentando carregar config de: ${path}`);
-        const response = await fetch(path);
-        if (response.ok) {
-          const config = await response.json();
-          console.log(`[FIREBASE] Configuração carregada com sucesso de ${path}`);
-          return config;
-        }
-      } catch (e) {}
-    }
-    return null;
-  } catch (e) {
-    console.error("[FIREBASE] Erro ao buscar configuração:", e);
-    return null;
-  }
-}
-
-const firebaseConfig = await getFirebaseConfig();
+const firebaseConfig = {
+  apiKey: "AIzaSyDN7RF9UiFyDAFXsPsVQwSRONJB0t1Xpqg",
+  authDomain: "jornada-portal.firebaseapp.com",
+  projectId: "jornada-portal",
+  storageBucket: "jornada-portal.firebasestorage.app",
+  messagingSenderId: "669362296644",
+  appId: "1:669362296644:web:f590d9834a8e4e60012911"
+};
 
 let app, db, auth;
 
 if (firebaseConfig) {
   app = initializeApp(firebaseConfig);
-  // Se firestoreDatabaseId for nulo ou vazio, usa a padrão
-  const dbId = firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== "" 
-               ? firebaseConfig.firestoreDatabaseId 
-               : "(default)";
-  db = getFirestore(app, dbId);
+  db = getFirestore(app); // Usa o banco (default) do projeto jornada-portal
   auth = getAuth(app);
-  console.log("🔥 Firebase conectado:", firebaseConfig.projectId, "| DB:", dbId);
+  console.log("🔥 Firebase conectado ao projeto REAL:", firebaseConfig.projectId);
 } else {
   console.error("❌ Falha crítica: Configuração do Firebase não encontrada.");
 }

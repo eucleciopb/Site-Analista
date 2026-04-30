@@ -406,81 +406,67 @@ async function loadMonthFromFirestore(yyyyMM) {
   const map = {};
 
   if (!db) {
-    console.error("[LOAD] Erro: Firebase não inicializado (db é nulo)");
+    console.error("[LOAD] Erro: Firebase não inicializado");
     setStatus("Erro: Firebase OFFLINE");
     return;
   }
 
   setStatus("Sincronizando...");
-  console.log(`%c[LOAD] Sincronização iniciada para ${yyyyMM}`, "color: #3b82f6; font-weight: bold;");
+  console.log(`%c[LOAD] Sincronizando dados mensais para: ${yyyyMM}`, "color: #3b82f6; font-weight: bold;");
   
   try {
     const coll = collection(db, AGENDA_COLLECTION);
-    const queries = [];
     
-    // 1. Busca por Mês + Usuário (com variações de nome)
-    const nameVars = [usuarioNome];
-    if (usuarioNome.toUpperCase() === "EUCLECIO") nameVars.push("Alex"); 
+    // Simplificamos a busca: pegamos tudo do mês para garantir que não perdemos nada por erro de digitação no nome
+    // Em seguida, filtramos no JavaScript (case-insensitive)
+    const q = query(coll, where("yyyyMM", "==", yyyyMM));
+    const snap = await getDocs(q);
     
-    const uniqueNames = [...new Set(nameVars.flatMap(n => [n, n.toLowerCase(), n.toUpperCase()]))];
-    
-    uniqueNames.forEach(n => {
-       queries.push(query(coll, where("yyyyMM", "==", yyyyMM), where("usuarioNome", "==", n)));
-       queries.push(query(coll, where("uidKey", "==", n.toLowerCase()), where("yyyyMM", "==", yyyyMM)));
-    });
-
-    // 2. Busca Global pelo Mês
-    queries.push(query(coll, where("yyyyMM", "==", yyyyMM)));
-
-    // 3. Busca pelo uidKey se existir
-    if (usuarioKey) queries.push(query(coll, where("uidKey", "==", usuarioKey), where("yyyyMM", "==", yyyyMM)));
-
-    const results = await Promise.allSettled(queries.map(q => getDocs(q)));
-    let totalDocsRaw = 0;
-    const processedIds = new Set();
-    const otherMonths = new Set();
+    let totalDocsNoMes = snap.size;
+    let itemsMapeados = 0;
     let foundAnalyst = null;
+    
+    const userTargetLow = (usuarioNome || "").toLowerCase();
+    const userKeyLow = (usuarioKey || "").toLowerCase();
 
-    results.forEach((res, idx) => {
-      if (res.status === "fulfilled") {
-        totalDocsRaw += res.value.size;
-        res.value.forEach(d => {
-          if (processedIds.has(d.id)) return;
-          processedIds.add(d.id);
+    snap.forEach(d => {
+      const data = d.data();
+      
+      // Verificamos se o documento pertence ao usuário (comparação insensível a maiúsculas)
+      const docUser = (data.usuarioNome || data.nome || "").toLowerCase();
+      const docKey = (data.uidKey || data.usuarioKey || "").toLowerCase();
+      const docAnalyst = (data.analyst || data.analista || "").toLowerCase();
 
-          const data = d.data();
-          const itemMonth = data.yyyyMM || data.monthKey || 
-                           (data.data && typeof data.data === 'string' && data.data.substring(0, 7)) || 
-                           (data.date && typeof data.date === 'string' && data.date.substring(0, 7));
-          
-          if (itemMonth === yyyyMM) {
-            if (!foundAnalyst) foundAnalyst = data.usuarioNome || data.analyst || data.uidKey || "Desconhecido";
-            console.log(`[LOAD] Sucesso: Carregando doc ${d.id} (${foundAnalyst})`);
-            
-            if (data.dias && typeof data.dias === "object") {
-              Object.entries(data.dias).forEach(([dt, val]) => {
-                const key = dt.substring(0, 10);
-                map[key] = { ...val, data: key };
-              });
-            } else {
-              const dt = data.data || data.date || data.dia || (d.id.includes("_") ? d.id.split("_")[1] : d.id);
-              if (dt && typeof dt === "string" && dt.length >= 10) {
-                const key = dt.substring(0, 10);
-                map[key] = data;
-              }
-            }
-          } else if (itemMonth) {
-            otherMonths.add(itemMonth);
+      const handlesUser = docUser === userTargetLow || 
+                          docKey === userKeyLow || 
+                          docAnalyst === userTargetLow ||
+                          d.id.toLowerCase().startsWith(userKeyLow);
+
+      if (handlesUser) {
+        if (!foundAnalyst) foundAnalyst = data.usuarioNome || data.nome || data.uidKey || usuarioNome;
+        
+        // Formato Consolidado (campo 'dias')
+        if (data.dias && typeof data.dias === "object") {
+          Object.entries(data.dias).forEach(([dt, val]) => {
+            const key = dt.substring(0, 10);
+            map[key] = { ...val, data: key };
+            itemsMapeados++;
+          });
+        } else {
+          // Formato individual (um doc por dia - como visto no seu print)
+          const dt = data.data || data.date || data.dia || (d.id.includes("_") ? d.id.split("_")[1] : d.id);
+          if (dt && typeof dt === "string" && dt.length >= 10) {
+            const key = dt.substring(0, 10);
+            map[key] = data;
+            itemsMapeados++;
           }
-        });
-      } else {
-        console.error(`[LOAD] Query ${idx} falhou:`, res.reason);
+        }
       }
     });
 
-    console.log(`[LOAD] Resumo: Analisados=${totalDocsRaw}, Mapeados=${Object.keys(map).length}, Analista=${foundAnalyst}`);
+    console.log(`[LOAD] Docs no banco para este mês: ${totalDocsNoMes} | Itens do usuário ${usuarioNome}: ${itemsMapeados}`);
 
-    // 4. Preencher a tabela
+    // Preencher a tabela
     const rows = [...tbody.querySelectorAll("tr[data-date]")];
     let loadedCount = 0;
     
@@ -501,7 +487,7 @@ async function loadMonthFromFirestore(yyyyMM) {
         updateValidationUI(cdInp);
         loadedCount++;
       } else {
-        // Reset campos se não houver dados
+        // Reset campos se não houver dados para este dia específico
         if (cdInp) cdInp.value = "";
         if (actSel) actSel.value = "";
         if (obsTxt) obsTxt.value = "";
@@ -509,15 +495,14 @@ async function loadMonthFromFirestore(yyyyMM) {
     }
     
     if (loadedCount > 0) {
-      setStatus(`Carregado: ${foundAnalyst}`);
-      setMsg(`Agenda de ${foundAnalyst} carregada com sucesso (${yyyyMM}).`, "success");
+      setStatus(`Analista: ${foundAnalyst || usuarioNome}`);
+      setMsg(`Agenda sincronizada com sucesso (${loadedCount} dias).`, "success");
     } else {
-      setStatus("Nenhum dado");
-      if (otherMonths.size > 0) {
-        const sorted = [...otherMonths].sort();
-        setMsg(`Dados encontrados em outros meses: ${sorted.join(", ")}.`, "info");
+      setStatus("Vazio");
+      if (totalDocsNoMes > 0) {
+        setMsg(`Existem dados no mês, mas nenhum para "${usuarioNome}".`, "info");
       } else {
-        setMsg(`Nenhum dado encontrado para ${yyyyMM}.`, "info");
+        setMsg(`Nenhum dado salvo para ${yyyyMM}.`, "info");
       }
     }
   } catch (err) {
