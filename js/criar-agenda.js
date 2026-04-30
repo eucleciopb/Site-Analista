@@ -256,7 +256,10 @@ function initObsModalEvents(){
    1) RENDERIZA O MÊS
 ========================= */
 function renderMonthSkeleton(yyyyMM) {
-  if (!tbody) return;
+  if (!tbody) {
+    console.error("ERRO: tbodyAgenda não encontrado no DOM");
+    return;
+  }
 
   console.log("Rendering month skeleton for:", yyyyMM);
   tbody.innerHTML = "";
@@ -285,6 +288,7 @@ function renderMonthSkeleton(yyyyMM) {
 
   setStatus("Gerando tabela...");
   const total = daysInMonth(y, m0);
+  console.log(`Building ${total} days for ${yyyyMM}`);
   const fragment = document.createDocumentFragment();
 
   for (let day = 1; day <= total; day++) {
@@ -356,6 +360,7 @@ function renderMonthSkeleton(yyyyMM) {
   }
   tbody.appendChild(fragment);
   setStatus(`Mês renderizado (${total} dias)`);
+  console.log("Month skeleton rendered successfully");
 }
 
 /* =========================
