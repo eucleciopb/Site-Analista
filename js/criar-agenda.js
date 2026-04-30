@@ -10,7 +10,7 @@ import {
 ========================= */
 const CDS_RAW = [
   "CD - Alagoinhas","CD - Andradina","CD - Angra dos Reis","CD - Aparecida de Goiânia","CD - Araçatuba","CD - Arapiraca","CD - Araraquara",
-  "CD - Balsas","CD - Barbalha","CD - Barra do Garca","CD - Barreiras","CD - Barretos","CD - Barueri","CD - Bauru","CD - Belém","CD - Boituva",
+  "CD - Balsas","CD - Barbalha","CD - Barra do Garca","CD - Barreiras","CD - Barretos","CD - Barueri","CD - Bauru","CD - Belém","CD - Boituva","Boituva, sp",
   "CD - Bom Jesus da Lapa","CD - Brumado","CD - Cachoeiro de Itapemirim","CD - Camaçari","CD - Campina Grande","CD - Campinas","CD - Campo Grande MS",
   "CD - Campo Grande RJ","CD - Campos dos Goytacazes","CD - Caraguatatuba","CD - Cariacica","CD - Carpina","CD - Caruaru","CD - Cascavel","CD - Catanduva",
   "CD - Caucaia","CD - Caxias","CD - Coimbra","CD - Conde","CD - Conselheiro Lafaiete","CD - Conselheiro Lafaiete","CD - Contagem","CD - Coxim","CD - Cuiabá",
@@ -100,7 +100,7 @@ function getCurrentUserName(){
 }
 
 const usuarioNome = getCurrentUserName();
-if (!usuarioNome) window.location.href = PATH_INDEX;
+if (!usuarioNome && typeof window !== 'undefined') window.location.href = PATH_INDEX;
 
 const usuarioKey = slug(usuarioNome);
 if (userInfo) userInfo.textContent = `Usuário: ${usuarioNome}`;
@@ -123,7 +123,6 @@ const ATIVIDADES = [
 
 /* =========================
    FERIADOS 2026
-   - pré-preenche, mas deixa editar
 ========================= */
 const FERIADOS_2026 = {
   "2026-01-01": { nome: "Confraternização Universal", tipo: "Feriado Nacional" },
@@ -189,20 +188,11 @@ function atividadeOptions(selected = "") {
   return opts.join("");
 }
 
-function cdOptions(selected = "") {
-  const opts = [`<option value="">-- selecione CD --</option>`];
-  for (const c of CDS_ARRAY) {
-    opts.push(`<option value="${c}" ${c === selected ? "selected" : ""}>${c}</option>`);
-  }
-  return opts.join("");
-}
-
 /* =========================
    MODAL OBSERVAÇÕES
 ========================= */
 function openObsModal(targetTextarea){
   obsTargetTextarea = targetTextarea;
-
   const tr = targetTextarea.closest("tr");
   const br = tr?.querySelector("td")?.textContent || "";
   const dia = tr?.querySelectorAll("td")?.[1]?.textContent || "";
@@ -212,11 +202,9 @@ function openObsModal(targetTextarea){
   }
 
   obsModalText.value = targetTextarea.value || "";
-
   obsModal?.classList.add("is-open");
   document.body.classList.add("modal-open");
   obsModal?.setAttribute("aria-hidden", "false");
-
   setTimeout(() => obsModalText?.focus(), 0);
 }
 
@@ -225,23 +213,18 @@ function closeObsModal({ apply = false } = {}){
     obsTargetTextarea.value = obsModalText?.value || "";
     triggerAutoSave();
   }
-
   obsModal?.classList.remove("is-open");
   document.body.classList.remove("modal-open");
   obsModal?.setAttribute("aria-hidden", "true");
-
   if (obsTargetTextarea) obsTargetTextarea.focus();
   obsTargetTextarea = null;
 }
 
 function initObsModalEvents(){
   if (!obsModal) return;
-
   obsModal.addEventListener("click", (e) => {
-    const el = e.target;
-    if (el?.dataset?.close === "1") closeObsModal({ apply: false });
+    if (e.target?.dataset?.close === "1") closeObsModal({ apply: false });
   });
-
   obsOk?.addEventListener("click", () => closeObsModal({ apply: true }));
   obsCancel?.addEventListener("click", () => closeObsModal({ apply: false }));
   obsClose?.addEventListener("click", () => closeObsModal({ apply: false }));
@@ -254,18 +237,16 @@ function initObsModalEvents(){
 
   if (tbody){
     tbody.addEventListener("click", (e) => {
-      const t = e.target;
-      if (t && t.matches("textarea[data-field='obs']")) {
+      if (e.target && e.target.matches("textarea[data-field='obs']")) {
         e.preventDefault();
-        openObsModal(t);
+        openObsModal(e.target);
       }
     });
 
     tbody.addEventListener("focusin", (e) => {
-      const t = e.target;
-      if (t && t.matches("textarea[data-field='obs']")) {
+      if (e.target && e.target.matches("textarea[data-field='obs']")) {
         e.preventDefault();
-        openObsModal(t);
+        openObsModal(e.target);
       }
     });
   }
@@ -273,30 +254,42 @@ function initObsModalEvents(){
 
 /* =========================
    1) RENDERIZA O MÊS
-   ✅ Feriados 2026 já vêm preenchidos
-   ✅ Continua editável
 ========================= */
 function renderMonthSkeleton(yyyyMM) {
   if (!tbody) return;
 
+  console.log("Rendering month skeleton for:", yyyyMM);
   tbody.innerHTML = "";
   showErr("");
   setMsg("");
-  setStatus("carregado (tabela)");
+  
+  if (!yyyyMM) {
+    setStatus("Nenhum mês selecionado");
+    return;
+  }
 
-  const [yStr, mStr] = (yyyyMM || "").split("-");
-  const y = Number(yStr);
-  const m1 = Number(mStr);
+  const parts = yyyyMM.split("-");
+  if (parts.length < 2) {
+    setStatus("Formato de mês inválido");
+    return;
+  }
+
+  const y = parseInt(parts[0], 10);
+  const m1 = parseInt(parts[1], 10);
   const m0 = m1 - 1;
 
-  if (!y || !m1) return;
+  if (isNaN(y) || isNaN(m1) || m1 < 1 || m1 > 12) {
+    setStatus("Data inválida");
+    return;
+  }
 
+  setStatus("Gerando tabela...");
   const total = daysInMonth(y, m0);
+  const fragment = document.createDocumentFragment();
 
   for (let day = 1; day <= total; day++) {
     const dt = new Date(y, m0, day);
     const sunday = dt.getDay() === 0;
-
     const iso = isoDate(y, m1, day);
     const br = brDate(y, m1, day);
     const dia = weekdayPt(dt);
@@ -318,11 +311,9 @@ function renderMonthSkeleton(yyyyMM) {
       const atividadeDefault = feriado ? "Feriado / Ponto Facultativo" : "";
       const obsDefault = feriado ? buildFeriadoObs(iso) : "";
 
-      if (feriado) {
-        tr.className = "bg-amber-500/5 border-b border-amber-500/10 group";
-      } else {
-        tr.className = "hover:bg-surface-container-highest/30 transition-colors border-b border-outline/5 group";
-      }
+      tr.className = feriado 
+        ? "bg-amber-500/5 border-b border-amber-500/10 group" 
+        : "hover:bg-surface-container-highest/30 transition-colors border-b border-outline/5 group";
 
       tr.innerHTML = `
         <td class="px-lg py-md font-mono text-[11px] text-on-surface-variant/70">${br}</td>
@@ -361,9 +352,10 @@ function renderMonthSkeleton(yyyyMM) {
         </td>
       `;
     }
-
-    tbody.appendChild(tr);
+    fragment.appendChild(tr);
   }
+  tbody.appendChild(fragment);
+  setStatus(`Mês renderizado (${total} dias)`);
 }
 
 /* =========================
@@ -371,7 +363,6 @@ function renderMonthSkeleton(yyyyMM) {
 ========================= */
 async function loadCDsToDatalist() {
   setStatus("carregando CDs…");
-
   let cdsFromFirestore = [];
   try {
     const snap = await getDocs(query(collection(db, CDS_COLLECTION), where("ativo", "==", true)));
@@ -380,7 +371,6 @@ async function loadCDsToDatalist() {
       const nome = (data?.nome || data?.cd || "").trim();
       if (nome) cdsFromFirestore.push(nome);
     });
-
     if (cdsFromFirestore.length === 0) {
       const snapAll = await getDocs(collection(db, CDS_COLLECTION));
       snapAll.forEach(d => {
@@ -392,89 +382,69 @@ async function loadCDsToDatalist() {
   } catch (e) {
     console.warn("Erro ao buscar CDs:", e);
   }
-
-  CDS_ARRAY = normalizeCDList(
-    cdsFromFirestore.length > 0 ? cdsFromFirestore : CDS_RAW
-  );
-
-  // Atualiza os inputs já renderizados para validar contra a nova lista se necessário
-  document.querySelectorAll("input[data-field='cd']").forEach(inp => {
-    updateValidationUI(inp);
-  });
-  
+  CDS_ARRAY = normalizeCDList(cdsFromFirestore.length > 0 ? cdsFromFirestore : CDS_RAW);
   setStatus(`CDs prontos: ${CDS_ARRAY.length}`);
 }
 
 /* =========================
    3) CARREGA FIRESTORE
-   ✅ se tiver salvo, sobrepõe o padrão do feriado
 ========================= */
 async function loadMonthFromFirestore(yyyyMM) {
-  setStatus("carregando do Firebase…");
+  if (!yyyyMM) return;
+  setStatus("Sincronizando do Firebase...");
+  
+  try {
+    const coll = collection(db, AGENDA_COLLECTION);
+    const queries = [
+      query(coll, where("uidKey", "==", usuarioKey), where("yyyyMM", "==", yyyyMM)),
+      query(coll, where("analyst", "==", usuarioNome), where("yyyyMM", "==", yyyyMM)),
+      query(coll, where("usuarioNome", "==", usuarioNome), where("yyyyMM", "==", yyyyMM))
+    ];
 
-  // 1) Por uidKey (slug)
-  const q1 = query(
-    collection(db, AGENDA_COLLECTION),
-    where("uidKey", "==", usuarioKey),
-    where("yyyyMM", "==", yyyyMM)
-  );
+    const results = await Promise.allSettled(queries.map(q => getDocs(q)));
+    const map = {};
+    results.forEach((res) => {
+      if (res.status === "fulfilled") {
+        res.value.forEach(d => {
+          const data = d.data();
+          if (data.dias && typeof data.dias === "object") {
+            Object.entries(data.dias).forEach(([dt, val]) => {
+              map[dt] = { ...val, data: dt };
+            });
+          } else if (data.data) {
+            map[data.data] = data;
+          }
+        });
+      }
+    });
 
-  // 2) Fallback por analyst / usuarioNome
-  const q2 = query(
-    collection(db, AGENDA_COLLECTION),
-    where("analyst", "==", usuarioNome),
-    where("yyyyMM", "==", yyyyMM)
-  );
+    const rows = [...tbody.querySelectorAll("tr[data-date]")];
+    let loadedCount = 0;
+    
+    for (const tr of rows) {
+      if (tr.dataset.sunday === "1") continue;
+      const dateISO = tr.dataset.date;
+      const saved = map[dateISO];
+      if (!saved) continue;
 
-  // 3) Fallback por usuarioNome
-  const q3 = query(
-    collection(db, AGENDA_COLLECTION),
-    where("usuarioNome", "==", usuarioNome),
-    where("yyyyMM", "==", yyyyMM)
-  );
+      const cdInp = tr.querySelector("[data-field='cd']");
+      const actSel = tr.querySelector("[data-field='atividade']");
+      const obsTxt = tr.querySelector("[data-field='obs']");
 
-  const [s1, s2, s3] = await Promise.all([
-    getDocs(q1),
-    getDocs(q2),
-    getDocs(q3)
-  ]);
-
-  const rawItems = [];
-  [...s1.docs, ...s2.docs, ...s3.docs].forEach(d => {
-    const data = d.data();
-    if (data.dias && typeof data.dias === "object") {
-       Object.entries(data.dias).forEach(([dt, val]) => {
-         rawItems.push({ data: dt, ...val });
-       });
-    } else {
-       rawItems.push(data);
+      if (cdInp) cdInp.value = saved.cd || "";
+      if (actSel) actSel.value = saved.atividade || "";
+      if (obsTxt) obsTxt.value = saved.obs || "";
+      
+      updateValidationUI(cdInp);
+      loadedCount++;
     }
-  });
-
-  const map = {};
-  rawItems.forEach(it => {
-    if (it.data) map[it.data] = it;
-  });
-
-  const rows = [...tbody.querySelectorAll("tr[data-date]")];
-  for (const tr of rows) {
-    if (tr.dataset.sunday === "1") continue;
-
-    const dateISO = tr.dataset.date;
-    const saved = map[dateISO];
-    if (!saved) continue;
-
-    tr.querySelector("[data-field='cd']").value = saved.cd || "";
-    tr.querySelector("[data-field='atividade']").value = saved.atividade || "";
-    tr.querySelector("[data-field='obs']").value = saved.obs || "";
+    setStatus(loadedCount > 0 ? `${loadedCount} dias carregados` : "Nenhum dado salvo");
+  } catch (err) {
+    console.error("Erro no loadMonthFromFirestore:", err);
+    throw err;
   }
-
-  setStatus("Firebase carregado");
 }
 
-/* =========================
-   4) SALVA FIRESTORE
-========================= */
 function isCDValid(name) {
   const val = (name || "").trim();
   if (!val) return true; 
@@ -482,9 +452,9 @@ function isCDValid(name) {
 }
 
 function updateValidationUI(input) {
+  if (!input) return;
   const val = input.value.trim();
   const valid = isCDValid(val);
-  
   if (valid) {
     input.classList.remove("ring-2", "ring-rose-500/50", "border-rose-500", "text-rose-500");
     input.classList.add("border-outline/20", "text-on-surface");
@@ -495,7 +465,7 @@ function updateValidationUI(input) {
 }
 
 /* =========================
-   SEARCHABLE DROPDOWN (CUSTOM)
+   DROPDOWN CDs
 ========================= */
 let activeDropdownInput = null;
 const dropdownList = document.createElement("div");
@@ -505,32 +475,27 @@ document.body.appendChild(dropdownList);
 function showDropdown(input) {
   activeDropdownInput = input;
   const rect = input.getBoundingClientRect();
-  
   dropdownList.style.width = `${rect.width}px`;
   dropdownList.style.top = `${rect.bottom + 4}px`;
   dropdownList.style.left = `${rect.left}px`;
   dropdownList.classList.remove("hidden");
-  
   filterDropdown(input.value);
 }
 
 function hideDropdown() {
-  // Timeout for click to register on list items
   setTimeout(() => {
     dropdownList.classList.add("hidden");
     activeDropdownInput = null;
   }, 200);
 }
 
-function filterDropdown(query) {
-  const q = (query || "").toLowerCase().trim();
+function filterDropdown(queryStr) {
+  const q = (queryStr || "").toLowerCase().trim();
   const filtered = CDS_ARRAY.filter(c => c.toLowerCase().includes(q));
-  
   if (filtered.length === 0) {
     dropdownList.innerHTML = `<div class="p-4 text-xs italic text-on-surface-variant/50">Nenhum CD encontrado</div>`;
     return;
   }
-  
   dropdownList.innerHTML = filtered.map(c => `
     <div class="px-md py-2.5 text-xs text-on-surface hover:bg-secondary/20 cursor-pointer transition-colors border-b border-outline/5 last:border-0" data-value="${c}">
       ${c}
@@ -548,181 +513,160 @@ dropdownList.addEventListener("mousedown", (e) => {
   }
 });
 
+/* =========================
+   SALVA FIRESTORE
+========================= */
 async function saveMonthToFirestore(yyyyMM) {
+  if (!yyyyMM) return;
   setStatus("salvando no Firebase…");
   const batch = writeBatch(db);
   let invalidCount = 0;
-
   const rows = [...tbody.querySelectorAll("tr[data-date]")];
+
   for (const tr of rows) {
     if (tr.dataset.sunday === "1") continue;
-
     const dataISO = tr.dataset.date;
     const cdInput = tr.querySelector("[data-field='cd']");
     const cd = cdInput.value.trim();
     const atividade = tr.querySelector("[data-field='atividade']").value;
     const obs = tr.querySelector("[data-field='obs']").value.trim();
 
-    const ref = doc(db, AGENDA_COLLECTION, `${usuarioKey}_${dataISO}`);
-
-    // Strict validation check
     if (cd && !isCDValid(cd)) {
       invalidCount++;
       updateValidationUI(cdInput);
-      continue; // Skip saving this row if CD is invalid
-    }
-
-    if (!cd && !atividade && !obs) {
-      batch.delete(ref);
       continue;
     }
 
-    batch.set(ref, {
-      uidKey: usuarioKey,
-      usuarioNome,
-      data: dataISO,
-      yyyyMM,
-      cd,
-      atividade,
-      obs,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
+    const ref = doc(db, AGENDA_COLLECTION, `${usuarioKey}_${dataISO}`);
+    if (!cd && !atividade && !obs) {
+      batch.delete(ref);
+    } else {
+      batch.set(ref, {
+        uidKey: usuarioKey,
+        usuarioNome,
+        analyst: usuarioNome,
+        data: dataISO,
+        yyyyMM,
+        cd,
+        atividade,
+        obs,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    }
   }
 
   await batch.commit();
-  
   if (invalidCount > 0) {
     setStatus("parcial (itens inválidos)");
-    setMsg(`${invalidCount} CD(s) não reconhecido(s). Corrija para salvar.`, "error");
+    setMsg(`${invalidCount} CD(s) não reconhecido(s).`, "error");
   } else {
-    setStatus("salvo");
+    setStatus("Sincronizado");
   }
 }
 
 /* =========================
    EVENTOS
 ========================= */
-/* =========================
-   EVENTOS AUTO-SAVE
- ========================= */
 let saveTimeout = null;
-
 function triggerAutoSave() {
   if (saveTimeout) clearTimeout(saveTimeout);
   saveTimeout = setTimeout(async () => {
+    const val = monthPicker?.value;
+    if (!val) return;
     try {
-      if (!monthPicker.value) return;
       setStatus("Sincronizando…");
-      await saveMonthToFirestore(monthPicker.value);
+      await saveMonthToFirestore(val);
       setMsg("Sincronizado ✅", "success");
     } catch (err) {
       console.error(err);
       setMsg("Erro ao salvar.", "error");
-      setStatus("erro");
     }
   }, 1000);
 }
 
 if (tbody) {
   tbody.addEventListener("change", (e) => {
-    const t = e.target;
-    if (t.dataset.field) {
-      triggerAutoSave();
-    }
+    if (e.target.dataset?.field) triggerAutoSave();
   });
-
-  // Para inputs de texto que podem não disparar 'change' imediatamente
   tbody.addEventListener("input", (e) => {
-    const t = e.target;
-    if (t.dataset.field === "cd") {
-      updateValidationUI(t);
-      filterDropdown(t.value);
+    if (e.target.dataset?.field === "cd") {
+      updateValidationUI(e.target);
+      filterDropdown(e.target.value);
       triggerAutoSave();
     }
   });
-
   tbody.addEventListener("focusin", (e) => {
-    const t = e.target;
-    if (t.dataset.field === "cd") {
-      showDropdown(t);
-    }
+    if (e.target.dataset?.field === "cd") showDropdown(e.target);
   });
-
   tbody.addEventListener("focusout", (e) => {
-    const t = e.target;
-    if (t.dataset.field === "cd") {
-      hideDropdown();
-    }
+    if (e.target.dataset?.field === "cd") hideDropdown();
   });
-
   tbody.addEventListener("click", (e) => {
-    const t = e.target;
-    if (t.dataset.field === "cd") {
-      showDropdown(t);
-    }
-
-    const toggleBtn = t.closest('[data-action="toggle-dropdown"]');
+    if (e.target.dataset?.field === "cd") showDropdown(e.target);
+    const toggleBtn = e.target.closest('[data-action="toggle-dropdown"]');
     if (toggleBtn) {
       const input = toggleBtn.parentElement.querySelector("input[data-field='cd']");
-      if (input) {
-        input.focus();
-        showDropdown(input);
-      }
+      if (input) { input.focus(); showDropdown(input); }
     }
   });
 }
 
 if (btnMenu) {
-  btnMenu.addEventListener("click", () => {
+  btnMenu.addEventListener("click", (e) => {
+    e.preventDefault();
     window.location.href = PATH_MENU;
   });
 }
 
 if (btnLogout) {
-  btnLogout.addEventListener("click", () => {
+  btnLogout.addEventListener("click", (e) => {
+    e.preventDefault();
     localStorage.removeItem("user_session");
     localStorage.removeItem("usuarioLogado");
     window.location.href = PATH_INDEX;
   });
 }
 
-if (monthPicker) {
-  monthPicker.addEventListener("change", async () => {
+if (btnSalvar) {
+  btnSalvar.addEventListener("click", async () => {
+    if (!monthPicker.value) return;
     try {
-      showErr("");
-      renderMonthSkeleton(monthPicker.value);
-      await loadMonthFromFirestore(monthPicker.value);
-      setMsg("");
+      btnSalvar.disabled = true;
+      btnSalvar.textContent = "Salvando...";
+      await saveMonthToFirestore(monthPicker.value);
+      setMsg("Salvo com sucesso!", "success");
     } catch (err) {
-      console.error(err);
-      setMsg("Não consegui carregar do Firebase.", "error");
-      showErr(err?.message || String(err));
-      setStatus("erro Firebase");
+      setMsg("Erro ao salvar.", "error");
+    } finally {
+      btnSalvar.disabled = false;
+      btnSalvar.textContent = "Salvar Alterações";
     }
   });
 }
 
-/* =========================
-   INIT
-========================= */
+if (monthPicker) {
+  monthPicker.addEventListener("change", async () => {
+    try {
+      renderMonthSkeleton(monthPicker.value);
+      await loadMonthFromFirestore(monthPicker.value);
+    } catch (err) {
+      console.error(err);
+    }
+  });
+}
+
 (async function init(){
   try {
-    showErr("");
-
     initObsModalEvents();
-
     const now = new Date();
-    if (monthPicker) monthPicker.value = toMonthKey(now);
-
+    const monthKey = toMonthKey(now);
+    if (monthPicker) monthPicker.value = monthKey;
+    renderMonthSkeleton(monthKey);
     await loadCDsToDatalist();
-    renderMonthSkeleton(monthPicker.value);
-    await loadMonthFromFirestore(monthPicker.value);
-
-    setMsg("Sistema operacional. Suas alterações são salvas automaticamente.", "success");
+    await loadMonthFromFirestore(monthKey);
+    setMsg("Sistema operacional. Auto-save ativo.", "success");
   } catch (err) {
     console.error(err);
-    setMsg("Não consegui carregar do Firebase, mas o mês já está disponível para preencher.", "error");
-    showErr(err?.message || String(err));
-    setStatus("erro Firebase");
+    setStatus("erro inicialização");
   }
 })();
