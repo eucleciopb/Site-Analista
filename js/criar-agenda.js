@@ -29,6 +29,13 @@ const CDS_RAW = [
   "CD - Vila Guilherme","CD - Vitória da Conquista","CD - Volta Redonda","Home Office","Férias","Corporativo"
 ];
 
+function normalizeCDList(arr) {
+  return [...new Set((arr || []).map(s => (s || "").trim()).filter(Boolean))]
+    .sort((a,b) => a.localeCompare(b, "pt-BR"));
+}
+
+let CDS_ARRAY = normalizeCDList(CDS_RAW);
+
 /* =========================
    CONFIG DO BANCO
 ========================= */
@@ -182,9 +189,12 @@ function atividadeOptions(selected = "") {
   return opts.join("");
 }
 
-function normalizeCDList(arr) {
-  return [...new Set((arr || []).map(s => (s || "").trim()).filter(Boolean))]
-    .sort((a,b) => a.localeCompare(b, "pt-BR"));
+function cdOptions(selected = "") {
+  const opts = [`<option value="">-- selecione CD --</option>`];
+  for (const c of CDS_ARRAY) {
+    opts.push(`<option value="${c}" ${c === selected ? "selected" : ""}>${c}</option>`);
+  }
+  return opts.join("");
 }
 
 /* =========================
@@ -213,6 +223,7 @@ function openObsModal(targetTextarea){
 function closeObsModal({ apply = false } = {}){
   if (apply && obsTargetTextarea){
     obsTargetTextarea.value = obsModalText?.value || "";
+    triggerAutoSave();
   }
 
   obsModal?.classList.remove("is-open");
@@ -244,7 +255,7 @@ function initObsModalEvents(){
   if (tbody){
     tbody.addEventListener("click", (e) => {
       const t = e.target;
-      if (t && t.matches("textarea.field[data-field='obs']")) {
+      if (t && t.matches("textarea[data-field='obs']")) {
         e.preventDefault();
         openObsModal(t);
       }
@@ -252,7 +263,7 @@ function initObsModalEvents(){
 
     tbody.addEventListener("focusin", (e) => {
       const t = e.target;
-      if (t && t.matches("textarea.field[data-field='obs']")) {
+      if (t && t.matches("textarea[data-field='obs']")) {
         e.preventDefault();
         openObsModal(t);
       }
@@ -297,49 +308,54 @@ function renderMonthSkeleton(yyyyMM) {
     tr.dataset.feriado = feriado ? "1" : "0";
 
     if (sunday) {
-      tr.className = "bg-white/[0.01] opacity-40 grayscale pointer-events-none border-b border-white/5";
+      tr.className = "bg-surface-container-highest/10 opacity-40 grayscale pointer-events-none border-b border-outline/5";
       tr.innerHTML = `
-        <td class="p-5 font-mono text-[10px] text-white/40">${br}</td>
-        <td class="p-5 font-black uppercase text-[10px] tracking-widest text-[#ff3b3b] italic">${dia}</td>
-        <td colspan="3" class="p-5 text-[10px] uppercase tracking-[0.2em] text-white/10 italic">Ciclo de Repouso / Bloqueado</td>
+        <td class="px-lg py-md font-mono text-[11px] text-on-surface-variant/50">${br}</td>
+        <td class="px-lg py-md font-bold uppercase text-[11px] tracking-widest text-secondary/60 italic">${dia}</td>
+        <td colspan="3" class="px-lg py-md text-[10px] uppercase tracking-[0.2em] text-on-surface-variant/20 italic text-center">Protocolo de Repouso / Domingo Bloqueado</td>
       `;
     } else {
       const atividadeDefault = feriado ? "Feriado / Ponto Facultativo" : "";
       const obsDefault = feriado ? buildFeriadoObs(iso) : "";
 
       if (feriado) {
-        tr.className = "bg-[#fab005]/5 border-b border-[#fab005]/10 group";
+        tr.className = "bg-amber-500/5 border-b border-amber-500/10 group";
       } else {
-        tr.className = "hover:bg-white/[0.02] transition-colors border-b border-white/5 group";
+        tr.className = "hover:bg-surface-container-highest/30 transition-colors border-b border-outline/5 group";
       }
 
       tr.innerHTML = `
-        <td class="p-5 font-mono text-[10px] text-white/50">${br}</td>
-        <td class="p-5 font-black uppercase text-[10px] tracking-widest ${feriado ? 'text-[#fab005]' : 'text-white/30 group-hover:text-white/70'} italic transition-colors">${dia}</td>
-        <td class="p-5">
-          <input
-            class="input-cyber w-full !h-11 !px-4 !text-[11px] !bg-black/20"
-            data-field="cd"
-            list="cdList"
-            placeholder="PROCURAR CD..."
-            value=""
-          >
+        <td class="px-lg py-md font-mono text-[11px] text-on-surface-variant/70">${br}</td>
+        <td class="px-lg py-md font-bold uppercase text-[11px] tracking-widest ${feriado ? 'text-amber-500' : 'text-on-surface-variant group-hover:text-on-surface'} italic transition-colors">${dia}</td>
+        <td class="px-lg py-md">
+          <div class="relative group/cd">
+            <input
+              class="bg-surface-container-highest/40 border border-outline/20 rounded-lg px-md py-2 text-on-surface focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all w-full text-xs font-medium pr-8 cursor-pointer"
+              data-field="cd"
+              placeholder="Selecione o CD..."
+              value=""
+              autocomplete="off"
+            >
+            <div class="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-on-surface-variant/30 group-hover/cd:text-secondary group-focus-within/cd:text-secondary transition-colors" data-action="toggle-dropdown">
+              <span class="material-symbols-outlined text-sm">expand_more</span>
+            </div>
+          </div>
         </td>
-        <td class="p-5">
-          <select class="input-cyber w-full !h-11 !px-4 !text-[11px] !bg-black/20" data-field="atividade">
+        <td class="px-lg py-md">
+          <select class="bg-surface-container-highest/40 border border-outline/20 rounded-lg px-md py-2 text-on-surface focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all w-full text-xs font-medium cursor-pointer" data-field="atividade">
             ${atividadeOptions(atividadeDefault)}
           </select>
         </td>
-        <td class="p-5">
+        <td class="px-lg py-md">
           <div class="relative group/obs">
             <textarea
-              class="input-cyber w-full !h-11 !py-3 !px-4 !text-[11px] overflow-hidden truncate italic !bg-black/20 cursor-pointer"
+              class="bg-surface-container-highest/40 border border-outline/20 rounded-lg px-md py-2 text-on-surface focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all w-full text-[11px] h-9 resize-none overflow-hidden truncate italic cursor-pointer"
               data-field="obs"
-              placeholder="DETALHES..."
+              placeholder="Detalhes..."
               readonly
             >${obsDefault}</textarea>
-            <div class="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover/obs:opacity-100 transition-opacity pointer-events-none">
-              <span class="text-[8px] text-[#ff3b3b]">EDITAR</span>
+            <div class="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/obs:opacity-100 transition-opacity pointer-events-none">
+              <span class="text-[9px] font-bold text-secondary tracking-tighter">EDITAR</span>
             </div>
           </div>
         </td>
@@ -354,8 +370,6 @@ function renderMonthSkeleton(yyyyMM) {
    2) CDs
 ========================= */
 async function loadCDsToDatalist() {
-  if (!cdList) return;
-
   setStatus("carregando CDs…");
 
   let cdsFromFirestore = [];
@@ -376,15 +390,19 @@ async function loadCDsToDatalist() {
       });
     }
   } catch (e) {
-    // fallback
+    console.warn("Erro ao buscar CDs:", e);
   }
 
-  const cdsFinal = normalizeCDList(
+  CDS_ARRAY = normalizeCDList(
     cdsFromFirestore.length > 0 ? cdsFromFirestore : CDS_RAW
   );
 
-  cdList.innerHTML = cdsFinal.map(cd => `<option value="${cd}"></option>`).join("");
-  setStatus(`CDs carregados: ${cdsFinal.length}`);
+  // Atualiza os inputs já renderizados para validar contra a nova lista se necessário
+  document.querySelectorAll("input[data-field='cd']").forEach(inp => {
+    updateValidationUI(inp);
+  });
+  
+  setStatus(`CDs prontos: ${CDS_ARRAY.length}`);
 }
 
 /* =========================
@@ -457,20 +475,102 @@ async function loadMonthFromFirestore(yyyyMM) {
 /* =========================
    4) SALVA FIRESTORE
 ========================= */
+function isCDValid(name) {
+  const val = (name || "").trim();
+  if (!val) return true; 
+  return CDS_ARRAY.includes(val);
+}
+
+function updateValidationUI(input) {
+  const val = input.value.trim();
+  const valid = isCDValid(val);
+  
+  if (valid) {
+    input.classList.remove("ring-2", "ring-rose-500/50", "border-rose-500", "text-rose-500");
+    input.classList.add("border-outline/20", "text-on-surface");
+  } else {
+    input.classList.add("ring-2", "ring-rose-500/50", "border-rose-500", "text-rose-500");
+    input.classList.remove("border-outline/20", "text-on-surface");
+  }
+}
+
+/* =========================
+   SEARCHABLE DROPDOWN (CUSTOM)
+========================= */
+let activeDropdownInput = null;
+const dropdownList = document.createElement("div");
+dropdownList.className = "fixed z-[200] bg-surface-container-highest border border-outline/30 rounded-lg shadow-2xl overflow-y-auto max-h-60 hidden scrollbar-thin";
+document.body.appendChild(dropdownList);
+
+function showDropdown(input) {
+  activeDropdownInput = input;
+  const rect = input.getBoundingClientRect();
+  
+  dropdownList.style.width = `${rect.width}px`;
+  dropdownList.style.top = `${rect.bottom + 4}px`;
+  dropdownList.style.left = `${rect.left}px`;
+  dropdownList.classList.remove("hidden");
+  
+  filterDropdown(input.value);
+}
+
+function hideDropdown() {
+  // Timeout for click to register on list items
+  setTimeout(() => {
+    dropdownList.classList.add("hidden");
+    activeDropdownInput = null;
+  }, 200);
+}
+
+function filterDropdown(query) {
+  const q = (query || "").toLowerCase().trim();
+  const filtered = CDS_ARRAY.filter(c => c.toLowerCase().includes(q));
+  
+  if (filtered.length === 0) {
+    dropdownList.innerHTML = `<div class="p-4 text-xs italic text-on-surface-variant/50">Nenhum CD encontrado</div>`;
+    return;
+  }
+  
+  dropdownList.innerHTML = filtered.map(c => `
+    <div class="px-md py-2.5 text-xs text-on-surface hover:bg-secondary/20 cursor-pointer transition-colors border-b border-outline/5 last:border-0" data-value="${c}">
+      ${c}
+    </div>
+  `).join("");
+}
+
+dropdownList.addEventListener("mousedown", (e) => {
+  const item = e.target.closest("[data-value]");
+  if (item && activeDropdownInput) {
+    activeDropdownInput.value = item.dataset.value;
+    updateValidationUI(activeDropdownInput);
+    triggerAutoSave();
+    dropdownList.classList.add("hidden");
+  }
+});
+
 async function saveMonthToFirestore(yyyyMM) {
   setStatus("salvando no Firebase…");
   const batch = writeBatch(db);
+  let invalidCount = 0;
 
   const rows = [...tbody.querySelectorAll("tr[data-date]")];
   for (const tr of rows) {
     if (tr.dataset.sunday === "1") continue;
 
     const dataISO = tr.dataset.date;
-    const cd = tr.querySelector("[data-field='cd']").value.trim();
+    const cdInput = tr.querySelector("[data-field='cd']");
+    const cd = cdInput.value.trim();
     const atividade = tr.querySelector("[data-field='atividade']").value;
     const obs = tr.querySelector("[data-field='obs']").value.trim();
 
     const ref = doc(db, AGENDA_COLLECTION, `${usuarioKey}_${dataISO}`);
+
+    // Strict validation check
+    if (cd && !isCDValid(cd)) {
+      invalidCount++;
+      updateValidationUI(cdInput);
+      continue; // Skip saving this row if CD is invalid
+    }
 
     if (!cd && !atividade && !obs) {
       batch.delete(ref);
@@ -490,12 +590,88 @@ async function saveMonthToFirestore(yyyyMM) {
   }
 
   await batch.commit();
-  setStatus("salvo");
+  
+  if (invalidCount > 0) {
+    setStatus("parcial (itens inválidos)");
+    setMsg(`${invalidCount} CD(s) não reconhecido(s). Corrija para salvar.`, "error");
+  } else {
+    setStatus("salvo");
+  }
 }
 
 /* =========================
    EVENTOS
 ========================= */
+/* =========================
+   EVENTOS AUTO-SAVE
+ ========================= */
+let saveTimeout = null;
+
+function triggerAutoSave() {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async () => {
+    try {
+      if (!monthPicker.value) return;
+      setStatus("Sincronizando…");
+      await saveMonthToFirestore(monthPicker.value);
+      setMsg("Sincronizado ✅", "success");
+    } catch (err) {
+      console.error(err);
+      setMsg("Erro ao salvar.", "error");
+      setStatus("erro");
+    }
+  }, 1000);
+}
+
+if (tbody) {
+  tbody.addEventListener("change", (e) => {
+    const t = e.target;
+    if (t.dataset.field) {
+      triggerAutoSave();
+    }
+  });
+
+  // Para inputs de texto que podem não disparar 'change' imediatamente
+  tbody.addEventListener("input", (e) => {
+    const t = e.target;
+    if (t.dataset.field === "cd") {
+      updateValidationUI(t);
+      filterDropdown(t.value);
+      triggerAutoSave();
+    }
+  });
+
+  tbody.addEventListener("focusin", (e) => {
+    const t = e.target;
+    if (t.dataset.field === "cd") {
+      showDropdown(t);
+    }
+  });
+
+  tbody.addEventListener("focusout", (e) => {
+    const t = e.target;
+    if (t.dataset.field === "cd") {
+      hideDropdown();
+    }
+  });
+
+  tbody.addEventListener("click", (e) => {
+    const t = e.target;
+    if (t.dataset.field === "cd") {
+      showDropdown(t);
+    }
+
+    const toggleBtn = t.closest('[data-action="toggle-dropdown"]');
+    if (toggleBtn) {
+      const input = toggleBtn.parentElement.querySelector("input[data-field='cd']");
+      if (input) {
+        input.focus();
+        showDropdown(input);
+      }
+    }
+  });
+}
+
 if (btnMenu) {
   btnMenu.addEventListener("click", () => {
     window.location.href = PATH_MENU;
@@ -510,22 +686,6 @@ if (btnLogout) {
   });
 }
 
-if (btnSalvar) {
-  btnSalvar.addEventListener("click", async () => {
-    try {
-      showErr("");
-      setMsg("Salvando…");
-      await saveMonthToFirestore(monthPicker.value);
-      setMsg("Salvo ✅ no Firebase", "success");
-    } catch (err) {
-      console.error(err);
-      setMsg("Erro ao salvar.", "error");
-      showErr(err?.message || String(err));
-      setStatus("erro");
-    }
-  });
-}
-
 if (monthPicker) {
   monthPicker.addEventListener("change", async () => {
     try {
@@ -535,7 +695,7 @@ if (monthPicker) {
       setMsg("");
     } catch (err) {
       console.error(err);
-      setMsg("Não consegui carregar do Firebase, mas você pode preencher e tentar salvar.", "error");
+      setMsg("Não consegui carregar do Firebase.", "error");
       showErr(err?.message || String(err));
       setStatus("erro Firebase");
     }
@@ -554,12 +714,11 @@ if (monthPicker) {
     const now = new Date();
     if (monthPicker) monthPicker.value = toMonthKey(now);
 
-    renderMonthSkeleton(monthPicker.value);
-
     await loadCDsToDatalist();
+    renderMonthSkeleton(monthPicker.value);
     await loadMonthFromFirestore(monthPicker.value);
 
-    setMsg("Pronto. Preencha e clique em Salvar alterações.", "success");
+    setMsg("Sistema operacional. Suas alterações são salvas automaticamente.", "success");
   } catch (err) {
     console.error(err);
     setMsg("Não consegui carregar do Firebase, mas o mês já está disponível para preencher.", "error");

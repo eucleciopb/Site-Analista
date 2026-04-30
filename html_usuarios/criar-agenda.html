@@ -1,474 +1,234 @@
-<!doctype html>
-<html lang="pt-br">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Criar Agenda</title>
+<!DOCTYPE html>
 
-  <!-- Use seu CSS global do projeto -->
-  <link rel="stylesheet" href="../css/styles.css" />
-
-  <!-- ✅ CSS TECH CLEAN (ISOLADO NESSA TELA) + ✅ MODAL OBSERVAÇÕES -->
-  <style>
-    /* Requer: <body class="bg page-agenda"> */
-    .page-agenda{
-      --bgA:#070A0F;
-      --bgB:#0B1018;
-      --panel:rgba(255,255,255,.06);
-      --panel2:rgba(255,255,255,.08);
-      --line:rgba(255,255,255,.10);
-      --line2:rgba(255,255,255,.14);
-      --txt:#EEF1F6;
-      --mut:rgba(238,241,246,.62);
-      --accent:#ff3b3b;
-      --accent2:#d91b2e;
-      --ok:#22c55e;
-      --warn:#facc15;
-      --danger:#ef4444;
-    }
-
-    /* fundo “tech” com grid ultra sutil + glow */
-    body.page-agenda.bg{
-      background:
-        radial-gradient(800px 420px at 16% 10%, rgba(255,59,59,.14), transparent 62%),
-        radial-gradient(760px 420px at 86% 8%, rgba(217,27,46,.10), transparent 62%),
-        linear-gradient(180deg, var(--bgA), var(--bgB));
-      min-height:100vh;
-      color:var(--txt);
-      position:relative;
-      margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto;
-    }
-    body.page-agenda.bg::before{
-      content:"";
-      position:fixed; inset:0;
-      pointer-events:none;
-      background:
-        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.030) 1px, transparent 1px);
-      background-size:52px 52px;
-      opacity:.18;
-      mix-blend-mode:overlay;
-    }
-
-    *{box-sizing:border-box}
-    .wrap{max-width:1200px;margin:0 auto;padding:0 18px 30px; position:relative;}
-    .hint{color:var(--mut);font-size:12px;line-height:1.35}
-    .err{color:var(--danger);font-weight:800;font-size:12px;margin-top:6px;display:none}
-    .msg{margin:10px 0 0;min-height:18px;font-size:12px;color:var(--mut);font-weight:700}
-
-    /* topbar glass */
-    .topbar{
-      max-width:1180px;
-      margin:18px auto 0;
-      padding:14px 16px;
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
-      border-radius:22px;
-      border:1px solid var(--line);
-      background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));
-      backdrop-filter: blur(14px);
-      box-shadow: 0 20px 60px rgba(0,0,0,.55);
-      position:relative;
-    }
-    .topbar h2{margin:0;font-size:18px;letter-spacing:.3px}
-    .top-actions{display:flex;gap:10px;flex-wrap:wrap}
-
-    /* card principal */
-    .card{
-      background:
-        radial-gradient(900px 440px at 10% 0%, rgba(255,59,59,.10), transparent 60%),
-        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
-      border:1px solid var(--line);
-      border-radius:26px;
-      padding:18px;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 30px 90px rgba(0,0,0,.65);
-    }
-
-    .row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between}
-    .row h3{margin:0 0 6px;font-size:16px;letter-spacing:.2px}
-    .sep{border:none;height:1px;background:rgba(255,255,255,.10);margin:16px 0}
-
-    label{font-size:12px;color:var(--mut);display:block;margin-bottom:6px}
-
-    #monthPicker{
-      padding:10px 12px;border-radius:16px;
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.25);
-      color:var(--txt);
-      outline:none;
-    }
-    #monthPicker:focus{
-      border-color:rgba(255,59,59,.60);
-      box-shadow:0 0 0 4px rgba(255,59,59,.16);
-    }
-
-    .pill{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:8px 12px;border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
-      font-size:12px;color:rgba(238,241,246,.70);
-      user-select:none;
-    }
-
-    /* botões */
-    .btn{
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:10px 14px;
-      font-weight:900;
-      cursor:pointer;
-      background:rgba(255,255,255,.06);
-      color:var(--txt);
-      transition: transform .12s ease, background .2s ease, box-shadow .2s ease;
-    }
-    .btn:hover{
-      transform: translateY(-1px);
-      background: rgba(255,255,255,.10);
-      box-shadow: 0 14px 34px rgba(0,0,0,.40);
-    }
-    .btn-primary{
-      border:1px solid rgba(255,59,59,.35);
-      background: linear-gradient(135deg, var(--accent2), var(--accent));
-      box-shadow: 0 18px 46px rgba(255,59,59,.18);
-    }
-    .btn-primary:hover{
-      box-shadow: 0 24px 70px rgba(255,59,59,.22);
-    }
-
-    /* tabela */
-    .table-wrap{
-      overflow:auto;
-      margin-top:14px;
-      border-radius:20px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-    }
-    table{width:100%;border-collapse:collapse;min-width:980px}
-    thead th{
-      position:sticky;top:0;z-index:2;
-      text-align:left;font-size:12px;color:rgba(238,241,246,.78);
-      font-weight:900;padding:12px;
-      border-bottom:1px solid rgba(255,255,255,.10);
-      background: linear-gradient(180deg, rgba(10,12,18,.92), rgba(10,12,18,.78));
-      backdrop-filter: blur(8px);
-    }
-    tbody td{
-      padding:10px 12px;
-      border-bottom:1px solid rgba(255,255,255,.06);
-      vertical-align:top;
-      font-size:13px;color:rgba(238,241,246,.92);
-    }
-    tbody tr:hover{background:rgba(255,255,255,.04)}
-    tr.blocked{opacity:.60;background:rgba(255,255,255,.02)}
-
-    .field{
-      width:100%;
-      padding:10px 10px;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.22);
-      color: var(--txt);
-      outline:none;
-      transition: border-color .15s ease, box-shadow .15s ease;
-    }
-    .field::placeholder{color:rgba(238,241,246,.45)}
-    .field:focus{
-      border-color: rgba(255,59,59,.55);
-      box-shadow: 0 0 0 4px rgba(255,59,59,.16);
-    }
-    select.field{cursor:pointer}
-
-    /* Observações: preview pequeno (modal abre no clique) */
-    textarea.field[data-field="obs"]{
-      min-height:54px;
-      height:54px;
-      resize:none;
-      overflow:hidden;
-      line-height:1.35;
-      cursor:pointer;
-    }
-
-    /* =========================
-       MODAL OBSERVAÇÕES (popup de verdade)
-    ========================= */
-    .obs-modal{
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      display: none;
-    }
-    .obs-modal.is-open{ display:block; }
-
-    .obs-modal__backdrop{
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,.70);
-      backdrop-filter: blur(6px);
-    }
-
-    .obs-modal__panel{
-      position: absolute;
-      left: 50%;
-      top: 8vh;
-      transform: translateX(-50%);
-      width: min(980px, calc(100% - 28px));
-      height: 78vh;
-
-      border-radius: 24px;
-      border: 1px solid rgba(255,255,255,.14);
-
-      background:
-        radial-gradient(900px 440px at 10% 0%, rgba(255,59,59,.12), transparent 60%),
-        linear-gradient(180deg, rgba(255,255,255,.07), rgba(0,0,0,.40));
-
-      box-shadow: 0 40px 110px rgba(0,0,0,.75);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .obs-modal__header{
-      padding: 14px 16px;
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap: 12px;
-      border-bottom: 1px solid rgba(255,255,255,.10);
-    }
-
-    .obs-modal__kicker{
-      font-size: 12px;
-      color: rgba(238,241,246,.60);
-      font-weight: 800;
-      letter-spacing: .2px;
-    }
-
-    .obs-modal__title{
-      margin: 2px 0 0;
-      font-size: 16px;
-      color: rgba(238,241,246,.95);
-    }
-
-    .obs-modal__x{
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color: rgba(238,241,246,.92);
-      border-radius: 14px;
-      padding: 8px 10px;
-      cursor: pointer;
-      font-weight: 900;
-    }
-
-    .obs-modal__textarea{
-      flex: 1;
-      width: 100%;
-      border: none;
-      outline: none;
-      background: transparent;
-      color: rgba(238,241,246,.95);
-      padding: 16px;
-      resize: none;
-      line-height: 1.65;
-      font-size: 14px;
-    }
-
-    .obs-modal__textarea::placeholder{
-      color: rgba(238,241,246,.40);
-    }
-
-    .obs-modal__footer{
-      padding: 14px 16px;
-      display:flex;
-      justify-content:flex-end;
-      gap: 10px;
-      border-top: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.18);
-    }
-
-    /* trava scroll do body quando modal abre */
-    body.page-agenda.modal-open{
-      overflow: hidden;
-    }
-
-    @media (max-width:720px){
-      .topbar{flex-direction:column;align-items:flex-start}
-      table{min-width:860px}
-      .obs-modal__panel{ top: 6vh; height: 82vh; }
-    }
-  </style>
+<html class="dark" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .tech-grid {
+            background-image: radial-gradient(circle at 2px 2px, rgba(220, 38, 38, 0.05) 1px, transparent 0);
+            background-size: 32px 32px;
+        }
+        .red-glow {
+            box-shadow: 0 0 15px rgba(220, 38, 38, 0.4);
+        }
+        .neon-text-red {
+            text-shadow: 0 0 8px rgba(220, 38, 38, 0.8);
+        }
+        .obs-modal {
+            display: none;
+        }
+        .obs-modal.is-open {
+            display: flex;
+        }
+        body.modal-open {
+            overflow: hidden;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "outline-variant": "#c6c6cd",
+                        "surface-container-low": "#eff4ff",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "primary-fixed": "#dae2fd",
+                        "on-secondary-fixed": "#07006c",
+                        "on-primary-fixed": "#131b2e",
+                        "surface-variant": "#d3e4fe",
+                        "primary": "#000000",
+                        "background": "#020617",
+                        "error-container": "#ffdad6",
+                        "surface": "#0f172a",
+                        "secondary": "#dc2626",
+                        "on-secondary-fixed-variant": "#2f2ebe",
+                        "secondary-container": "#dc2626",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#eaf1ff",
+                        "secondary-fixed": "#e1e0ff",
+                        "on-secondary-container": "#fffbff",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#71f8e4",
+                        "surface-container-lowest": "#020617",
+                        "on-primary-container": "#7c839b",
+                        "surface-container-highest": "#1e293b",
+                        "on-surface-variant": "#94a3b8",
+                        "on-error": "#ffffff",
+                        "on-background": "#f8f9ff",
+                        "on-tertiary-fixed-variant": "#005048",
+                        "tertiary-container": "#00201c",
+                        "on-tertiary-container": "#009485",
+                        "tertiary": "#000000",
+                        "primary-container": "#131b2e",
+                        "surface-tint": "#565e74",
+                        "surface-dim": "#0f172a",
+                        "on-tertiary-fixed": "#00201c",
+                        "surface-container-high": "#1e293b",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#213145",
+                        "surface-container": "#0f172a",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "primary-fixed-dim": "#bec6e0",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "outline": "#475569",
+                        "on-surface": "#f8fafc",
+                        "surface-bright": "#1e293b",
+                        "inverse-primary": "#bec6e0",
+                        "tertiary-fixed-dim": "#4fdbc8"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "xl": "32px",
+                        "sm": "12px",
+                        "xs": "8px",
+                        "lg": "24px",
+                        "md": "16px",
+                        "container-margin": "40px",
+                        "gutter": "24px",
+                        "base": "4px"
+                    },
+                    fontFamily: {
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "h3": ["Inter"],
+                        "h1": ["Inter"],
+                        "body-md": ["Inter"],
+                        "h2": ["Inter"]
+                    },
+                    fontSize: {
+                        "label-sm": ["11px", {"lineHeight": "1", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "h3": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "h1": ["36px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "h2": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-
-<body class="bg-tech">
-<div class="bg-grid"></div>
-
-<header class="topbar animate-fade">
-  <div class="flex items-center justify-between max-w-7xl mx-auto px-6 w-full">
-    <div class="flex items-center gap-4">
-      <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-[#d91b2e] to-[#ff3b3b] flex items-center justify-center shadow-lg shadow-[#ff3b3b]/20">
-        <span class="text-lg font-black italic">GP</span>
-      </div>
-      <div>
-        <h2 class="text-xl font-black italic uppercase tracking-tight text-white">Planejamento Operacional</h2>
-        <div id="userInfo" class="text-[10px] font-bold uppercase tracking-widest text-white/40 mt-0.5 italic">USUÁRIO: —</div>
-      </div>
-    </div>
-
-    <div class="flex gap-3">
-      <button id="btnMenu" class="bg-white/5 hover:bg-white/10 text-white/70 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-white/5">Voltar</button>
-      <button id="btnLogout" class="bg-white/5 hover:bg-white/10 text-white/70 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-white/5">Sair</button>
-    </div>
-  </div>
-</header>
-
-<main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-  
-  <section class="glass-card p-6 md:p-8 animate-fade [animation-delay:0.1s]">
-    <div class="flex items-center justify-between mb-8 pb-4 border-b border-white/5 flex-wrap gap-4">
-      <div>
-        <h3 class="text-lg font-black italic uppercase text-[#ff3b3b]">Parâmetros do Ciclo</h3>
-        <p class="text-[10px] text-white/30 uppercase tracking-widest mt-1 italic font-bold">Definição de cronograma e metas táticas</p>
-      </div>
-      <div class="flex items-center gap-4 flex-wrap">
-        <div id="statusPill" class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-widest text-white/40 italic">Status: Sincronizando...</div>
-        <button id="btnSalvar" class="btn-cyber !h-11 !px-8 !bg-[#ff3b3b]">SALVAR MATRIZ</button>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end mb-8">
-      <div class="space-y-2">
-        <label for="monthPicker" class="ml-1 text-[9px] font-black uppercase tracking-widest text-white/30 italic">Período de Atuação</label>
-        <input id="monthPicker" type="month" class="input-cyber w-full text-xs h-12" />
-      </div>
-      <div class="lg:col-span-3">
-        <div id="msg" class="text-[10px] font-black uppercase tracking-widest text-white/20 italic h-4"></div>
-      </div>
-    </div>
-
-    <datalist id="cdList"></datalist>
-
-    <div class="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
-      <table class="w-full text-left border-collapse min-w-[1100px]">
-        <thead class="bg-white/5 text-[9px] font-black uppercase tracking-widest text-white/40">
-          <tr>
-            <th class="p-5 border-b border-white/5 w-[140px]">DIÁRIO</th>
-            <th class="p-5 border-b border-white/5 w-[120px]">REF</th>
-            <th class="p-5 border-b border-white/5 w-[280px]">UNIDADE (CD)</th>
-            <th class="p-5 border-b border-white/5 w-[260px]">AÇÃO TÁTICA</th>
-            <th class="p-5 border-b border-white/5">PROTOCOLOS / OBSERVAÇÕES</th>
-          </tr>
-        </thead>
-        <tbody id="tbodyAgenda" class="text-[11px] font-medium text-white/80 italic">
-          <!-- Conteúdo dinâmico -->
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-</main>
-
-<!-- MODAL OBSERVAÇÕES OBSIDIAN CYBER -->
-<div class="obs-modal fixed inset-0 z-[9999] hidden" id="obsModal">
-  <div class="absolute inset-0 bg-black/80 backdrop-blur-md" data-close="1"></div>
-  
-  <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl p-px rounded-3xl bg-gradient-to-br from-white/10 to-transparent shadow-2xl">
-    <div class="glass-card p-8 bg-[#070A0F]/95">
-      <header class="flex justify-between items-start mb-6">
-        <div>
-          <p class="text-[10px] font-black uppercase tracking-widest text-[#ff3b3b] mb-1 italic">Módulo de Log</p>
-          <h3 class="text-xl font-black italic uppercase tracking-tight" id="obsTitle">Editar Observações</h3>
-        </div>
-        <button id="obsClose" class="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-white/50 hover:text-white">✕</button>
-      </header>
-
-      <div class="space-y-4">
-        <textarea id="obsModalText" class="input-cyber w-full h-48 py-4 px-5 text-sm leading-relaxed" placeholder="Insira os detalhes táticos do dia..."></textarea>
-      </div>
-
-      <footer class="mt-8 flex justify-end gap-3">
-        <button id="obsCancel" class="bg-white/5 hover:bg-white/10 text-white/60 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/10 italic">Cancelar</button>
-        <button id="obsOk" class="btn-cyber !px-10">Confirmar</button>
-      </footer>
-    </div>
-  </div>
+<body class="bg-background text-on-background font-body-md min-h-screen tech-grid selection:bg-secondary/30">
+<!-- TopAppBar -->
+<header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 shadow-sm dark:shadow-indigo-900/20 sticky top-0 z-50 flex items-center justify-between px-6 py-4 w-full">
+<div class="flex items-center gap-md">
+<div class="bg-secondary p-1.5 rounded-lg red-glow">
+<span class="text-white font-black tracking-tighter text-xl">GP</span>
 </div>
-
-  <!-- ✅ mantém seu JS externo -->
-  <script type="module" src="../js/criar-agenda.js"></script>
-
-  <!-- ✅ JS extra só do Modal (funciona junto com seu criar-agenda.js) -->
-  <script>
-    (function(){
-      const tbody = document.getElementById("tbodyAgenda");
-
-      const obsModal = document.getElementById("obsModal");
-      const obsModalText = document.getElementById("obsModalText");
-      const obsOk = document.getElementById("obsOk");
-      const obsCancel = document.getElementById("obsCancel");
-      const obsClose = document.getElementById("obsClose");
-
-      let obsTargetTextarea = null;
-
-      function openObsModal(targetTextarea){
-        obsTargetTextarea = targetTextarea;
-        obsModalText.value = targetTextarea.value || "";
-        obsModal.classList.add("is-open");
-        document.body.classList.add("modal-open");
-        obsModal.setAttribute("aria-hidden", "false");
-        setTimeout(() => obsModalText.focus(), 0);
-      }
-
-      function closeObsModal({ apply = false } = {}){
-        if (apply && obsTargetTextarea){
-          obsTargetTextarea.value = obsModalText.value || "";
-        }
-        obsModal.classList.remove("is-open");
-        document.body.classList.remove("modal-open");
-        obsModal.setAttribute("aria-hidden", "true");
-
-        if (obsTargetTextarea) obsTargetTextarea.focus();
-        obsTargetTextarea = null;
-      }
-
-      // fecha clicando no backdrop
-      if (obsModal){
-        obsModal.addEventListener("click", (e) => {
-          const el = e.target;
-          if (el && el.dataset && el.dataset.close === "1") closeObsModal({ apply: false });
-        });
-      }
-
-      if (obsOk) obsOk.addEventListener("click", () => closeObsModal({ apply: true }));
-      if (obsCancel) obsCancel.addEventListener("click", () => closeObsModal({ apply: false }));
-      if (obsClose) obsClose.addEventListener("click", () => closeObsModal({ apply: false }));
-
-      // ESC fecha
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && obsModal && obsModal.classList.contains("is-open")) {
-          closeObsModal({ apply: false });
-        }
-      });
-
-      // clique/foco em qualquer textarea de obs abre o modal (delegação)
-      if (tbody){
-        tbody.addEventListener("focusin", (e) => {
-          const t = e.target;
-          if (t && t.matches("textarea.field[data-field='obs']")) {
-            e.preventDefault();
-            openObsModal(t);
-          }
-        });
-
-        tbody.addEventListener("click", (e) => {
-          const t = e.target;
-          if (t && t.matches("textarea.field[data-field='obs']")) {
-            e.preventDefault();
-            openObsModal(t);
-          }
-        });
-      }
-    })();
-  </script>
-</body>
-</html>
+<div>
+<h1 class="font-inter text-sm font-medium tracking-wide text-slate-900 dark:text-slate-50 uppercase">Criar Agenda</h1>
+<div class="text-[10px] text-on-surface-variant uppercase tracking-widest mt-0.5" id="userInfo">Analista Carregando...</div>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="hidden sm:flex items-center gap-sm mr-4">
+<button class="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-on-surface-variant hover:text-secondary transition-colors" id="btnMenu">Voltar ao Menu</button>
+</div>
+<button class="bg-secondary/10 text-secondary hover:bg-secondary hover:text-white p-2 rounded-lg transition-all border border-secondary/20" id="btnLogout" title="Sair">
+<span class="material-symbols-outlined text-sm" data-icon="logout">logout</span>
+</button>
+</div>
+</header>
+<main class="max-w-7xl mx-auto p-gutter md:p-container-margin space-y-lg">
+<!-- Error Box -->
+<div class="hidden bg-error/10 border border-error/20 text-error p-md rounded-lg text-xs font-bold uppercase tracking-wider" id="errBox"></div>
+<!-- Section: Header Controls -->
+<section class="glass-panel rounded-xl p-lg shadow-2xl relative overflow-hidden group">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-lg relative z-10">
+<div class="space-y-1">
+<h2 class="font-h2 text-on-surface flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary" data-icon="event_note">event_note</span>
+                        Agenda do Mês
+                    </h2>
+<p class="text-on-surface-variant font-body-md">Cada dia aparece em uma linha. Domingos ficam bloqueados.</p>
+</div>
+<div class="flex flex-wrap items-center gap-md">
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-on-surface-variant uppercase" for="monthPicker">Mês de Referência</label>
+<div class="relative">
+<input class="bg-surface-container-highest border border-outline/30 rounded-lg px-md py-sm text-on-surface focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all w-48 appearance-none" id="monthPicker" type="month"/>
+<span class="material-symbols-outlined absolute right-3 top-2.5 pointer-events-none text-on-surface-variant" data-icon="calendar_month">calendar_month</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-on-surface-variant uppercase">Status</label>
+<div class="px-md py-2 bg-secondary/10 text-secondary border border-secondary/20 rounded-lg text-xs font-bold uppercase flex items-center gap-2" id="statusPill">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+                            Aguardando
+                        </div>
+</div>
+</div>
+<div class="mt-md text-xs font-bold text-on-surface-variant italic" id="msg"></div>
+</section>
+<!-- Section: Agenda Table -->
+<section class="glass-panel rounded-xl overflow-hidden shadow-xl border border-outline/10">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-highest/50 border-b border-outline/20">
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider w-32">Data</th>
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider w-32">Dia</th>
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider">CD</th>
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider">Atividade</th>
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider">Observações</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline/5" id="tbodyAgenda">
+<!-- Agenda items injected here -->
+</tbody>
+</table>
+</div>
+</section>
+</main>
+<!-- Modal Observações -->
+<div aria-hidden="true" class="obs-modal fixed inset-0 z-[100] items-center justify-center p-lg" id="obsModal">
+<div class="absolute inset-0 bg-background/80 backdrop-blur-md obs-modal__backdrop" data-close="1"></div>
+<div aria-labelledby="obsTitle" aria-modal="true" class="glass-panel w-full max-w-lg rounded-xl shadow-2xl relative z-10 border border-secondary/30 flex flex-col max-h-[80vh] obs-modal__panel" role="dialog">
+<div class="p-lg border-b border-outline/10 flex items-center justify-between">
+<div class="space-y-0.5">
+<div class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Observações do dia</div>
+<h4 class="font-h3 text-on-surface flex items-center gap-sm" id="obsTitle">
+<span class="material-symbols-outlined text-secondary" data-icon="sticky_note_2">sticky_note_2</span>
+                        Editar Protocolos
+                    </h4>
+</div>
+<button aria-label="Fechar" class="text-on-surface-variant hover:text-on-surface transition-colors p-2 rounded-lg hover:bg-surface-variant" id="obsClose">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<div class="p-lg flex-1 overflow-y-auto">
+<textarea class="w-full h-48 bg-surface-container-highest/50 border border-outline/30 rounded-lg p-md text-on-surface focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all resize-none obs-modal__textarea" id="obsModalText" placeholder="Digite as observações operacionais para este registro..."></textarea>
+<div class="flex items-center gap-md p-md mt-lg bg-secondary/10 rounded-lg border border-secondary/20">
+<span class="material-symbols-outlined text-secondary" data-icon="info">info</span>
+<p class="text-xs text-on-surface-variant">Suas alterações são salvas automaticamente de forma segura no banco de dados operacional.</p>
+</div>
+</div>
+<div class="p-lg border-t border-outline/10 flex justify-end gap-md">
+<button class="px-lg py-sm font-label-md text-on-surface-variant hover:text-on-surface uppercase transition-colors" id="obsCancel">Cancelar</button>
+<button class="bg-secondary hover:bg-red-700 text-white px-lg py-sm rounded-lg font-bold uppercase text-xs tracking-wider transition-all red-glow" id="obsOk">Confirmar</button>
+</div>
+</div>
+</div>
+<!-- Decoration element -->
+<div class="fixed bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-secondary to-transparent opacity-50 blur-sm pointer-events-none"></div>
+<script src="../js/criar-agenda.js" type="module"></script>
+</body></html>
