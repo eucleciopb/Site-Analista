@@ -3,7 +3,7 @@ import { db } from "./firebase.js";
 import {
   collection, getDocs, query, where,
   doc, writeBatch, serverTimestamp
-} from "firebase/firestore";
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /* =========================
    CDs (lista completa) - FALLBACK GARANTIDO
@@ -100,10 +100,17 @@ function getCurrentUserName(){
 }
 
 const usuarioNome = getCurrentUserName();
-if (!usuarioNome && typeof window !== 'undefined') window.location.href = PATH_INDEX;
 
-const usuarioKey = slug(usuarioNome);
-if (userInfo) userInfo.textContent = `Usuário: ${usuarioNome}`;
+  if (!usuarioNome && typeof window !== 'undefined') {
+    console.warn("Usuário não identificado. Redirecionando...");
+    window.location.href = PATH_INDEX;
+  }
+
+  const usuarioKey = slug(usuarioNome);
+  if (userInfo) {
+    userInfo.textContent = `Usuário: ${usuarioNome}`;
+    console.log("Usuário logado:", usuarioNome);
+  }
 
 /* =========================
    ATIVIDADES
