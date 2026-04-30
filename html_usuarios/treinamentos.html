@@ -109,147 +109,166 @@
     }
   </style>
 </head>
+<body class="bg-tech selection:bg-[#ff3b3b]/30">
+<div class="bg-grid"></div>
 
-<body class="bg">
-  <header class="topbar">
-    <div>
-      <h2>Treinamentos Realizados</h2>
-      <div id="userInfo" class="hint" style="color:#d1d5db;margin-top:4px;"></div>
-      <div id="editBadge">Modo edição ativo (1 linha / 1 CD). Atualize e salve.</div>
+<header class="topbar animate-fade sticky top-0 z-50 backdrop-blur-md bg-black/40 border-b border-white/5 h-20">
+  <div class="flex items-center justify-between max-w-7xl mx-auto px-6 w-full h-full">
+    <div class="flex items-center gap-4">
+      <div class="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-gradient-to-br from-[#d91b2e] to-[#ff3b3b] flex items-center justify-center shadow-lg shadow-[#ff3b3b]/20 transition-transform hover:scale-110">
+        <span class="text-base md:text-lg font-black italic">GP</span>
+      </div>
+      <div>
+        <h2 class="text-lg md:text-xl font-black italic uppercase tracking-tight text-white">Performance Ops</h2>
+        <div id="userInfo" class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-[#ff3b3b] mt-0.5 italic">USUÁRIO: —</div>
+        <div id="editBadge" class="text-[8px] font-black uppercase text-yellow-500 mt-0.5 hidden italic animate-pulse">MODO EDIÇÃO ATIVO</div>
+      </div>
     </div>
 
-    <div class="top-actions">
-      <button id="btnMenu" class="btn-secondary" type="button">Voltar ao Menu</button>
-      <button id="btnLogout" class="btn-secondary" type="button">Sair</button>
+    <div class="flex gap-2">
+      <button id="btnMenu" class="h-10 px-4 md:px-6 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all border border-white/5 italic">Menu</button>
+      <button id="btnLogout" class="h-10 px-4 md:px-6 rounded-xl bg-white/5 hover:bg-white/10 text-white/40 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all border border-white/5">Sair</button>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main class="card wide">
-    <section class="row-between">
+<main class="max-w-7xl mx-auto p-4 md:p-6 lg:p-8 space-y-6 md:space-y-10">
+  
+  <!-- FORMULÁRIO -->
+  <section class="glass-card p-6 md:p-10 animate-fade [animation-delay:0.1s] relative overflow-hidden">
+    <div class="absolute -top-24 -left-24 w-64 h-64 bg-[#ff3b3b] opacity-[0.05] blur-[100px] pointer-events-none"></div>
+    
+    <div class="flex items-center justify-between mb-10 pb-6 border-b border-white/5 flex-wrap gap-6">
       <div>
-        <h3>Registrar Treinamento</h3>
-        <p class="hint">Preencha os dados do treinamento realizado. Salva no Firebase (Firestore).</p>
+        <h3 class="text-xl font-black italic uppercase text-white tracking-tight">Registro de Treinamento</h3>
+        <p class="text-[10px] md:text-xs text-white/30 uppercase tracking-[0.2em] mt-1 italic font-bold">Lançamento de atividades e metas operacionais</p>
       </div>
-      <div>
-        <button id="btnCancelEdit" class="btn-secondary" type="button" style="display:none;">Cancelar edição</button>
-      </div>
-    </section>
+      <button id="btnCancelEdit" class="hidden text-[10px] font-black uppercase tracking-widest text-[#ff3b3b] hover:text-white px-6 py-2.5 rounded-2xl bg-[#ff3b3b]/10 border border-[#ff3b3b]/20 transition-all italic underline underline-offset-4 decoration-2">Abrotar Edição</button>
+    </div>
 
-    <hr class="sep" />
-
-    <section class="form-grid">
-      <div>
-        <label for="dataTreino">Data</label>
-        <input id="dataTreino" type="date" />
-      </div>
-
-      <div>
-        <label for="dataApuracao">Data para apuração do resultado</label>
-        <input id="dataApuracao" type="date" />
-        <div class="hint" style="margin-top:6px;">Prazo para o avaliador validar se atingiu a meta.</div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      <div class="space-y-2 group">
+        <label for="dataTreino" class="block text-[8px] font-black uppercase tracking-[0.4em] text-white/20 mb-2 italic ml-1 group-focus-within:text-[#ff3b3b] transition-colors">Data do Treino</label>
+        <input id="dataTreino" type="date" class="input-cyber w-full text-xs h-12 !px-4" />
       </div>
 
-      <div>
-        <label for="publico">Público-alvo</label>
-        <select id="publico" required>
-          <option value="" disabled selected>Selecione...</option>
-          <option value="Gestor">Gestor</option>
-          <option value="Vendedor">Vendedor</option>
+      <div class="space-y-2 group">
+        <label for="dataApuracao" class="block text-[8px] font-black uppercase tracking-[0.4em] text-white/20 mb-2 italic ml-1 group-focus-within:text-[#ff3b3b] transition-colors">Data de Apuração</label>
+        <input id="dataApuracao" type="date" class="input-cyber w-full text-xs h-12 !px-4" />
+      </div>
+
+      <div class="space-y-2 group">
+        <label for="publico" class="block text-[8px] font-black uppercase tracking-[0.4em] text-white/20 mb-2 italic ml-1 group-focus-within:text-[#ff3b3b] transition-colors">Público Alvo</label>
+        <select id="publico" class="input-cyber w-full text-xs h-12 !px-4">
+          <option value="" disabled selected>SELECIONAR NÍVEL...</option>
+          <option value="Gestor">GESTOR / LIDERANÇA</option>
+          <option value="Vendedor">VENDEDOR / OPERADOR</option>
         </select>
       </div>
 
-      <div style="grid-column: 1 / -1;">
-        <label for="treinamento">Treinamento realizado</label>
-        <select id="treinamento" required>
-          <option value="" disabled selected>Carregando treinamentos...</option>
+      <div class="lg:col-span-3 space-y-2 group">
+        <label for="treinamento" class="block text-[8px] font-black uppercase tracking-[0.4em] text-white/20 mb-2 italic ml-1 group-focus-within:text-[#ff3b3b] transition-colors">Matriz de Treinamento</label>
+        <select id="treinamento" class="input-cyber w-full text-xs h-12 !px-4">
+          <option value="" disabled selected>CARREGANDO CATÁLOGO OPERACIONAL...</option>
         </select>
-        <div class="hint" id="hintTreinos" style="margin-top:6px; opacity:.9;"></div>
+        <div id="hintTreinos" class="text-[9px] text-[#ff3b3b]/60 uppercase tracking-widest mt-2 italic font-black"></div>
       </div>
 
-      <div style="grid-column: 1 / -1;">
-        <label for="cdInput">CD treinado (pode adicionar mais de um)</label>
-
-        <div class="cd-row">
-          <div class="grow">
-            <input id="cdInput" type="text" list="cdList" placeholder="Digite e selecione na lista..." />
-            <datalist id="cdList"></datalist>
-            <div class="hint-inline">Selecione na lista e clique em <b>Adicionar CD</b>. Cada CD vira 1 registro no histórico.</div>
+      <div class="lg:col-span-3 glass-card bg-black/40 p-6 md:p-8 space-y-8 border border-white/5 rounded-3xl">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <label class="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 italic">Unidades de Atendimento (Cluster CD)</label>
+          <div class="flex gap-4">
+            <button id="btnSelectAllCds" class="text-[9px] font-black uppercase tracking-widest text-white/20 hover:text-white transition-colors">Selecionar Tudo</button>
+            <span class="text-white/5">|</span>
+            <button id="btnClearCds" class="text-[9px] font-black uppercase tracking-widest text-[#ff3b3b]/40 hover:text-[#ff3b3b] transition-colors">Limpar Mapa</button>
           </div>
-
-          <button id="btnAddCd" class="btn-mini primary" type="button">Adicionar CD</button>
-          <button id="btnSelectAllCds" class="btn-mini" type="button">Selecionar todos os CDs</button>
-          <button id="btnClearCds" class="btn-mini" type="button">Limpar CDs</button>
+        </div>
+        
+        <div class="flex flex-wrap gap-4 items-end">
+          <div class="flex-1 min-w-[280px]">
+            <input id="cdInput" type="text" list="cdList" class="input-cyber w-full text-xs h-12 !px-5" placeholder="LOCALIZAR UNIDADE NO VETOR..." />
+            <datalist id="cdList"></datalist>
+          </div>
+          <button id="btnAddCd" class="btn-cyber !h-12 !px-10 !bg-[#ff3b3b]/10 !border-[#ff3b3b]/30 text-[#ff3b3b] hover:!bg-[#ff3b3b] hover:!text-white italic !rounded-2xl shadow-xl">ADICIONAR</button>
         </div>
 
-        <div id="chips" class="chips-wrap"></div>
+        <div id="chips" class="flex flex-wrap gap-3 min-h-[50px] p-6 bg-black/20 rounded-2xl border border-white/5 shadow-inner">
+          <span class="text-[9px] uppercase tracking-[0.3em] text-white/10 italic font-black">Nenhum nó de unidade detectado no protocolo...</span>
+        </div>
       </div>
 
+      <div class="space-y-2 group">
+        <label for="totalPessoas" class="block text-[8px] font-black uppercase tracking-[0.4em] text-white/20 mb-2 italic ml-1 group-focus-within:text-[#ff3b3b] transition-colors">Impacto (Pessoas)</label>
+        <input id="totalPessoas" type="number" class="input-cyber w-full text-xs h-12 !px-4" placeholder="QTD..." />
+      </div>
+
+      <div class="space-y-2 group">
+        <label for="notaMedia" class="block text-[8px] font-black uppercase tracking-[0.4em] text-white/20 mb-2 italic ml-1 group-focus-within:text-[#ff3b3b] transition-colors">Métrica de Absorção</label>
+        <input id="notaMedia" type="number" class="input-cyber w-full text-xs h-12 !px-4" placeholder="NÍVEL 0-10" />
+      </div>
+
+      <div class="lg:col-span-3 space-y-2 group">
+        <label for="obs" class="block text-[8px] font-black uppercase tracking-[0.4em] text-white/20 mb-2 italic ml-1 group-focus-within:text-[#ff3b3b] transition-colors">Notas de Campo</label>
+        <input id="obs" type="text" class="input-cyber w-full text-xs h-12 !px-4 shadow-inner" placeholder="OBSERVAÇÕES ADICIONAIS..." />
+      </div>
+
+      <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="space-y-2 group">
+          <label for="desafio" class="block text-[8px] font-black uppercase tracking-[0.4em] text-white/20 mb-2 italic ml-1 group-focus-within:text-[#ff3b3b] transition-colors">Diagnóstico / Gap</label>
+          <textarea id="desafio" class="input-cyber w-full h-32 text-xs p-5 shadow-inner" placeholder="QUAL O DESAFIO DETECTADO NA UNIDADE?"></textarea>
+        </div>
+        <div class="space-y-2 group">
+          <label for="metaDesafio" class="block text-[8px] font-black uppercase tracking-[0.4em] text-white/20 mb-2 italic ml-1 group-focus-within:text-[#ff3b3b] transition-colors">Objetivo Estratégico</label>
+          <textarea id="metaDesafio" class="input-cyber w-full h-32 text-xs p-5 shadow-inner" placeholder="QUAL O RESULTADO ESPERADO EM 30 DIAS?"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-12 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
+      <div id="msg" class="text-[10px] font-black uppercase tracking-[0.3em] text-[#ff3b3b]/60 italic h-4 animate-pulse"></div>
+      <button id="btnSalvar" class="btn-cyber !h-16 !px-20 !bg-[#ff3b3b] shadow-2xl shadow-[#ff3b3b]/40 !text-sm hover:scale-105 transition-transform">EXECUTAR REGISTRO</button>
+    </div>
+  </section>
+
+  <!-- LISTAGEM -->
+  <section class="glass-card p-0 md:p-2 animate-fade [animation-delay:0.2s] bg-black/40 relative overflow-hidden">
+    <div class="p-6 md:p-10 border-b border-white/5 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
       <div>
-        <label for="totalPessoas">Total de pessoas treinadas</label>
-        <input id="totalPessoas" type="number" min="1" step="1" placeholder="Ex: 18" required />
+        <h3 class="text-xl font-black italic uppercase text-white tracking-tight">Telemetria Histórica</h3>
+        <p class="text-[10px] md:text-xs text-white/30 uppercase tracking-[0.2em] mt-1 font-bold italic">Rastreabilidade completa de protocolos e ações</p>
       </div>
-
-      <div>
-        <label for="notaMedia">Nota média do treinamento</label>
-        <input id="notaMedia" type="number" min="0" max="10" step="0.1" placeholder="Ex: 8.7" required />
+      <div class="w-full md:w-80">
+        <label for="busca" class="block text-[8px] font-black uppercase tracking-[0.4em] text-white/20 mb-2 italic ml-1">Filtro Alfanumérico</label>
+        <input id="busca" type="text" class="input-cyber w-full text-xs h-12 !px-5" placeholder="LOCALIZAR LOG..." />
       </div>
+    </div>
 
-      <div style="grid-column: 1 / -1;">
-        <label for="obs">Observações</label>
-        <input id="obs" type="text" maxlength="220" placeholder="Opcional" />
-      </div>
-
-      <div style="grid-column: 1 / -1;">
-        <label for="desafio">Desafio</label>
-        <input id="desafio" type="text" maxlength="160" placeholder="Ex: Aumentar adesão ao ritual da matinal..." required />
-      </div>
-
-      <div style="grid-column: 1 / -1;">
-        <label for="metaDesafio">Meta do desafio</label>
-        <input id="metaDesafio" type="text" maxlength="160" placeholder="Ex: 90% de participação + checklist padrão por 30 dias" required />
-      </div>
-
-      <div class="page-actions" style="grid-column: 1 / -1; justify-content:flex-end; gap:10px;">
-        <button id="btnSalvar" type="button">Salvar Treinamento</button>
-      </div>
-    </section>
-
-    <p id="msg" class="msg"></p>
-
-    <hr class="sep" />
-
-    <section class="row-between" style="align-items:flex-end;">
-      <div>
-        <h3>Meu Histórico</h3>
-        <p class="hint">Registros do usuário logado (Firebase). (1 linha por CD)</p>
-      </div>
-      <div style="min-width:260px;">
-        <label for="busca">Buscar</label>
-        <input id="busca" type="text" placeholder="Treinamento, CD, desafio..." />
-      </div>
-    </section>
-
-    <div class="table-wrap" style="margin-top:12px;">
-      <table class="table table-sticky">
-        <thead>
+    <div class="overflow-x-auto custom-scrollbar">
+      <table class="w-full text-left border-collapse min-w-[1400px]">
+        <thead class="bg-white/5 text-[9px] font-black uppercase tracking-[0.2em] text-white/30">
           <tr>
-            <th class="actions-col" style="width:190px;">Ações</th>
-            <th style="width:120px;">Data</th>
-            <th style="width:140px;">Apuração (prazo)</th>
-            <th style="width:130px;">Público</th>
-            <th style="width:260px;">Treinamento</th>
-            <th style="width:240px;">CD</th>
-            <th style="width:130px;">Pessoas</th>
-            <th style="width:120px;">Nota</th>
-            <th style="width:260px;">Desafio</th>
-            <th style="width:260px;">Meta</th>
-            <th>Obs</th>
+            <th class="p-6 border-b border-white/5 sticky left-0 bg-[#070A0F] z-20 w-[180px]">OPERADORES</th>
+            <th class="p-6 border-b border-white/5 w-[130px]">CRONOLOGIA</th>
+            <th class="p-6 border-b border-white/5 w-[130px]">APURAÇÃO</th>
+            <th class="p-6 border-b border-white/5 w-[200px]">UNIDADES</th>
+            <th class="p-6 border-b border-white/5">MATRIZ / TREINAMENTO</th>
+            <th class="p-6 border-b border-white/5 w-[100px]">VOL</th>
+            <th class="p-6 border-b border-white/5 w-[140px]">ABSORÇÃO</th>
+            <th class="p-6 border-b border-white/5 w-[450px]">DIAGNÓSTICO & OBJETIVO</th>
           </tr>
         </thead>
-        <tbody id="tbodyHist"></tbody>
+        <tbody id="tbodyHist" class="text-[11px] font-bold text-white/70 italic">
+          <tr><td colspan="8" class="p-24 text-center text-white/10 uppercase tracking-[0.4em] font-black animate-pulse">Sincronizando Fluxo de Dados...</td></tr>
+        </tbody>
       </table>
     </div>
-  </main>
+  </section>
+
+</main>le>
+    </div>
+  </section>
+
+</main>
 
   <script type="module">
     import { db } from "../js/firebase.js";
@@ -375,25 +394,26 @@
     function renderChips(){
       chipsEl.innerHTML = "";
       if (SELECTED_CDS.length === 0){
-        chipsEl.innerHTML = `<span class="hint" style="opacity:.85;">Nenhum CD adicionado ainda.</span>`;
+        chipsEl.innerHTML = `<span class="text-[10px] uppercase tracking-widest text-white/20 italic">Vetor de CDs vazio...</span>`;
         return;
       }
       SELECTED_CDS.forEach(cd => {
         const chip = document.createElement("div");
-        chip.className = "chip";
+        chip.className = "group flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-bold text-white/70 hover:border-[#ff3b3b]/50 transition-all";
         chip.innerHTML = `
-          <span class="t" title="${cd}">${cd}</span>
-          <span class="x" data-x="${cd}">×</span>
+          <span class="truncate max-w-[120px] italic">${cd}</span>
+          <button class="h-4 w-4 flex items-center justify-center rounded-md bg-white/10 group-hover:bg-[#ff3b3b] text-white transition-colors" data-x="${cd}">×</button>
         `;
         chipsEl.appendChild(chip);
       });
 
       chipsEl.querySelectorAll("[data-x]").forEach(btn => {
-        btn.addEventListener("click", () => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
           const v = btn.getAttribute("data-x");
           SELECTED_CDS = SELECTED_CDS.filter(x => x !== v);
           renderChips();
-        });
+        };
       });
     }
 
@@ -600,30 +620,38 @@
       tbodyHist.innerHTML = "";
 
       if (filtered.length === 0){
-        tbodyHist.innerHTML = `<tr><td colspan="11" style="opacity:.8;">Nenhum registro ainda.</td></tr>`;
+        tbodyHist.innerHTML = `<tr><td colspan="8" class="p-10 text-center text-white/20 uppercase tracking-[0.2em] italic">Nenhum registro encontrado no Database</td></tr>`;
         return;
       }
 
       filtered.forEach(item => {
         const tr = document.createElement("tr");
+        tr.className = "hover:bg-white/[0.02] transition-colors border-b border-white/5 group";
         tr.innerHTML = `
-          <td class="actions-col" style="width:190px;">
-            <div class="actions-inline">
-              <button class="btn-act" type="button" data-edit="${item.id}">Editar</button>
-              <button class="btn-act danger" type="button" data-del="${item.id}">Excluir</button>
+          <td class="p-4 sticky left-0 bg-[#0B1018]/90 backdrop-blur-md z-10 border-r border-white/5">
+            <div class="flex gap-2">
+              <button class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-[#ff3b3b]/20 hover:text-[#ff3b3b] border border-white/10 transition-all font-black uppercase text-[9px]" data-edit="${item.id}">Edit</button>
+              <button class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 hover:text-red-500 border border-white/10 transition-all font-black uppercase text-[9px]" data-del="${item.id}">Del</button>
             </div>
           </td>
 
-          <td>${toBR(item.data)}</td>
-          <td>${toBR(item.dataApuracao)}</td>
-          <td>${item.publico || "-"}</td>
-          <td>${item.treinamento || "-"}</td>
-          <td>${item.cd || "-"}</td>
-          <td>${item.totalPessoas ?? "-"}</td>
-          <td>${item.notaMedia ?? "-"}</td>
-          <td>${item.desafio || "-"}</td>
-          <td>${item.meta || "-"}</td>
-          <td>${item.obs || "-"}</td>
+          <td class="p-4 font-mono text-[10px] text-white/50">${toBR(item.data)}</td>
+          <td class="p-4 font-mono text-[10px] text-yellow-500/70">${toBR(item.dataApuracao)}</td>
+          <td class="p-4"><span class="px-2 py-1 rounded bg-[#ff3b3b]/10 text-[#ff3b3b] font-black italic tracking-tighter uppercase text-[10px]">${item.cd || "-"}</span></td>
+          <td class="p-4 font-bold text-white/90 italic tracking-tight">${item.treinamento || "-"}</td>
+          <td class="p-4 text-white/40">${item.totalPessoas ?? "-"}</td>
+          <td class="p-4">
+            <div class="flex items-center gap-2">
+              <span class="font-black text-white">${item.notaMedia ?? "-"}</span>
+              <div class="h-1 w-12 bg-white/10 rounded-full overflow-hidden">
+                <div class="h-full bg-[#ff3b3b]" style="width: ${((item.notaMedia || 0) * 10)}%"></div>
+              </div>
+            </div>
+          </td>
+          <td class="p-4 space-y-1">
+            <div class="text-[10px] text-white/70 line-clamp-1 italic"><b class="text-white/30 uppercase mr-1">D:</b> ${item.desafio || "-"}</div>
+            <div class="text-[10px] text-white/50 line-clamp-1 italic"><b class="text-white/20 uppercase mr-1">M:</b> ${item.meta || "-"}</div>
+          </td>
         `;
         tbodyHist.appendChild(tr);
       });

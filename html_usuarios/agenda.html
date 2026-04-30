@@ -6,106 +6,99 @@
   <title>Agenda do Analista</title>
 
   <style>
-    :root{
-      --bg:#0b0f14;
-      --card:rgba(255,255,255,.06);
-      --border:rgba(255,255,255,.10);
-      --text:#e5e7eb;
-      --muted:#9ca3af;
-      --danger:#ef4444;
-      --ok:#22c55e;
-      --field:rgba(0,0,0,.30);
+    /* Trava scroll do body quando modal abre (caso use modal nessa tela no futuro) */
+    body.modal-open{
+      overflow: hidden;
     }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto;background:var(--bg);color:var(--text)}
-    .topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 22px}
-    .topbar h2{margin:0;font-size:18px}
-    .hint{color:var(--muted);font-size:12px;margin-top:4px}
-    .err{color:var(--danger);font-weight:900;font-size:12px;margin-top:6px;display:none;white-space:pre-wrap}
-    .wrap{max-width:1200px;margin:0 auto;padding:0 18px 30px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px}
-    .row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between}
-    label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
-    input[type="month"]{
-      padding:10px 12px;border-radius:12px;border:1px solid var(--border);
-      background:var(--field);color:var(--text)
-    }
-    .btn{border:1px solid var(--border);border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer;background:transparent;color:var(--text)}
-    .btn-primary{background:var(--danger);border-color:transparent}
-    .btn-primary:hover{filter:brightness(1.06)}
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px;color:var(--muted)}
-    .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
-    .cardsMini{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
-    .mini{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:14px;padding:12px}
-    .mini .t{font-size:12px;color:var(--muted)}
-    .mini .v{margin-top:6px;font-size:18px;font-weight:1000}
-    .table-wrap{overflow:auto;margin-top:14px;border-radius:14px;border:1px solid var(--border)}
-    table{width:100%;border-collapse:collapse;min-width:980px;background:rgba(255,255,255,.03)}
-    thead th{position:sticky;top:0;background:rgba(0,0,0,.35);backdrop-filter:blur(8px);text-align:left;font-size:12px;color:var(--muted);padding:12px;border-bottom:1px solid var(--border)}
-    tbody td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:top}
-    tbody tr:hover{background:rgba(255,255,255,.04)}
-    .empty{padding:14px;text-align:center;color:var(--muted)}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;}
+
     @media (max-width:720px){
-      .topbar{flex-direction:column;align-items:flex-start}
-      table{min-width:860px}
+      .topbar{flex-direction:column;align-items:flex-start; height: auto !important; padding: 20px !important;}
+      .max-w-7xl{ padding: 10px !important; }
     }
   </style>
 </head>
 
-<body>
-  <header class="topbar">
-    <div>
-      <h2>Agenda do Analista</h2>
-      <div class="hint" id="userInfo"></div>
-      <div class="err" id="errBox"></div>
+<body class="bg-tech selection:bg-[#ff3b3b]/30">
+<div class="bg-grid"></div>
+
+<header class="topbar animate-fade sticky top-0 z-50 backdrop-blur-md bg-black/40 border-b border-white/5 h-20">
+  <div class="flex items-center justify-between max-w-7xl mx-auto px-6 w-full h-full">
+    <div class="flex items-center gap-4">
+      <div class="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-gradient-to-br from-[#d91b2e] to-[#ff3b3b] flex items-center justify-center shadow-lg shadow-[#ff3b3b]/20 transition-transform hover:scale-110">
+        <span class="text-base md:text-lg font-black italic">GP</span>
+      </div>
+      <div>
+        <h2 class="text-lg md:text-xl font-black italic uppercase tracking-tight text-white">Agenda Operacional</h2>
+        <div id="userInfo" class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-[#ff3b3b] mt-0.5 italic">USUÁRIO: —</div>
+      </div>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn" id="btnMenu" type="button">Voltar ao Menu</button>
-      <button class="btn" id="btnLogout" type="button">Sair</button>
+
+    <div class="flex gap-2 md:gap-3">
+      <button id="btnMenu" class="h-10 px-4 md:px-6 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all border border-white/5 italic">Voltar</button>
+      <button id="btnLogout" class="h-10 w-10 md:w-auto md:px-6 rounded-xl bg-white/5 hover:bg-white/10 text-white/40 hover:text-white flex items-center justify-center text-[10px] font-black uppercase tracking-widest transition-all border border-white/5">
+        <span class="hidden md:inline">Sair</span>
+        <span class="md:hidden">✕</span>
+      </button>
     </div>
-  </header>
-
-  <div class="wrap">
-    <main class="card">
-      <div class="row">
-        <div>
-          <h3 style="margin:0 0 6px">Resumo do mês</h3>
-          <div class="hint">Mostra somente os dias preenchidos em <span class="mono">agenda_dias</span>.</div>
-        </div>
-        <div class="pill" id="statusPill"><span class="dot"></span> Status: aguardando</div>
-      </div>
-
-      <hr style="border:none;height:1px;background:rgba(255,255,255,.10);margin:16px 0">
-
-      <div class="row">
-        <div>
-          <label for="monthPicker">Mês</label>
-          <input id="monthPicker" type="month" />
-        </div>
-        <button class="btn btn-primary" id="btnRecarregar" type="button">Recarregar</button>
-      </div>
-
-      <div class="cardsMini" id="cardsMini"></div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:140px;">Data</th>
-              <th style="width:110px;">Dia</th>
-              <th style="width:280px;">CD</th>
-              <th style="width:260px;">Atividade</th>
-              <th>Observações</th>
-            </tr>
-          </thead>
-          <tbody id="tbodyAgenda">
-            <tr><td colspan="5" class="empty">Carregando…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </main>
   </div>
+</header>
+
+<main class="max-w-7xl mx-auto p-4 md:p-6 lg:p-8 space-y-6 md:space-y-10">
+  
+  <section class="glass-card p-6 md:p-10 animate-fade [animation-delay:0.1s] relative overflow-hidden">
+    <div class="absolute -top-24 -right-24 w-64 h-64 bg-[#ff3b3b] opacity-[0.05] blur-[100px] pointer-events-none"></div>
+    
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 pb-6 border-b border-white/5 gap-6">
+      <div>
+        <h3 class="text-xl font-black italic uppercase text-white tracking-tight">Atividade do Ciclo</h3>
+        <p class="text-[10px] text-white/30 uppercase tracking-[0.2em] mt-1 italic font-bold">Monitoramento de deslocamento e registros</p>
+      </div>
+      <div id="statusPill" class="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-[0.2em] text-white/40 italic transition-all shadow-inner">
+        <div class="w-2 h-2 rounded-full bg-[#ff3b3b] animate-pulse shadow-[0_0_8px_rgba(255,59,59,0.5)]"></div>
+        Sincronizando...
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end mb-10">
+      <div class="space-y-2">
+        <label for="monthPicker" class="block text-[8px] font-black uppercase tracking-[0.4em] text-white/20 mb-2 italic ml-1">Vetor Temporal</label>
+        <input id="monthPicker" type="month" class="input-cyber w-full text-xs h-12 !px-4" />
+      </div>
+      <button id="btnRecarregar" class="btn-cyber !h-12 !px-8 !text-[10px] group">
+        <span class="group-hover:tracking-[0.2em] transition-all">RECARREGAR PROTOCOLO</span>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5" id="cardsMini">
+      <!-- Mini cards injetados via JS -->
+    </div>
+  </section>
+
+  <section class="glass-card p-0 md:p-2 overflow-hidden animate-fade [animation-delay:0.2s] bg-black/40">
+    <div class="p-6 md:p-10 border-b border-white/5">
+      <h3 class="text-lg font-black italic uppercase text-white">Log de Deslocamento</h3>
+      <p class="text-[10px] text-white/30 uppercase tracking-[0.2em] mt-1 italic font-bold">Histórico granular de unidades e atividades operacionais</p>
+    </div>
+
+    <div class="overflow-x-auto custom-scrollbar">
+      <table class="w-full text-left border-collapse min-w-[1100px]">
+        <thead class="bg-white/5 text-[9px] font-black uppercase tracking-[0.2em] text-white/30">
+          <tr>
+            <th class="p-6 border-b border-white/5 w-[160px]">DATA ISO</th>
+            <th class="p-6 border-b border-white/5 w-[120px]">REF</th>
+            <th class="p-6 border-b border-white/5 w-[280px]">UNIDADE ATENDIDA</th>
+            <th class="p-6 border-b border-white/5 w-[260px]">STATUS ATIVIDADE</th>
+            <th class="p-6 border-b border-white/5">RELATÓRIO DE DESVIO</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyAgenda" class="text-[11px] font-bold text-white/70 italic">
+          <tr><td colspan="5" class="p-24 text-center text-white/10 uppercase tracking-[0.4em] font-black">Iniciando Varredura Térmica no Database...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
 
   <script type="module">
     import { db } from "../js/firebase.js";
@@ -181,13 +174,11 @@
 
     function renderSummary(items){
       const dias = items.length;
-
       const cds = new Set();
       const atividadeCount = new Map();
 
       for(const it of items){
         if(it.cd) cds.add(it.cd);
-
         const a = (it.atividade || "—").trim() || "—";
         atividadeCount.set(a, (atividadeCount.get(a)||0) + 1);
       }
@@ -199,40 +190,44 @@
       }
 
       cardsMini.innerHTML = `
-        <div class="mini">
-          <div class="t">Dias preenchidos</div>
-          <div class="v">${dias}</div>
+        <div class="glass-card bg-white/[0.03] p-5 border border-white/5">
+          <div class="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 mb-2 italic">Ciclos Ativos</div>
+          <div class="text-3xl font-black italic tracking-tighter text-[#ff3b3b]">${dias}</div>
+          <div class="text-[9px] uppercase tracking-widest text-white/20 mt-1">Dias Registrados</div>
         </div>
-        <div class="mini">
-          <div class="t">CDs no mês</div>
-          <div class="v">${cds.size}</div>
+        <div class="glass-card bg-white/[0.03] p-5 border border-white/5">
+          <div class="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 mb-2 italic">Unidades (CD)</div>
+          <div class="text-3xl font-black italic tracking-tighter text-white">${cds.size}</div>
+          <div class="text-[9px] uppercase tracking-widest text-white/20 mt-1">Centros Atendidos</div>
         </div>
-        <div class="mini">
-          <div class="t">Atividade mais comum</div>
-          <div class="v" style="font-size:14px;line-height:1.2">${topAtv}</div>
+        <div class="glass-card bg-white/[0.03] p-5 border border-white/5">
+          <div class="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 mb-2 italic">Frequência Operacional</div>
+          <div class="text-sm font-black italic uppercase tracking-tight text-white/90 line-clamp-1">${topAtv}</div>
+          <div class="text-[9px] uppercase tracking-widest text-white/20 mt-1">Tarefa Dominante</div>
         </div>
-        <div class="mini">
-          <div class="t">Registros carregados</div>
-          <div class="v">${items.length}</div>
+        <div class="glass-card bg-white/[0.03] p-5 border border-white/5">
+          <div class="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 mb-2 italic">Integridade Log</div>
+          <div class="text-3xl font-black italic tracking-tighter text-white/60">${items.length}</div>
+          <div class="text-[9px] uppercase tracking-widest text-white/20 mt-1">Entradas de Cache</div>
         </div>
       `;
     }
 
     function renderTable(items){
       if(items.length === 0){
-        tbody.innerHTML = `<tr><td colspan="5" class="empty">Sem registros neste mês.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="p-20 text-center text-white/20 uppercase tracking-[0.2em] italic">Vetor de Dados Vazio para este período</td></tr>`;
         return;
       }
 
       const rows = items.map(it=>{
         const iso = it.data || "";
         return `
-          <tr>
-            <td class="mono">${iso ? brFromIso(iso) : "—"}</td>
-            <td>${iso ? weekdayShort(iso) : "—"}</td>
-            <td>${it.cd || "—"}</td>
-            <td>${it.atividade || "—"}</td>
-            <td>${it.obs || ""}</td>
+          <tr class="hover:bg-white/[0.02] transition-colors border-b border-white/5 group">
+            <td class="p-5 font-mono text-[11px] text-white/50">${iso ? brFromIso(iso) : "—"}</td>
+            <td class="p-5 font-black uppercase text-[10px] tracking-widest text-white/30 group-hover:text-white transition-colors italic">${iso ? weekdayShort(iso) : "—"}</td>
+            <td class="p-5"><span class="px-2 py-1 rounded bg-[#ff3b3b]/10 text-[#ff3b3b] font-black italic tracking-tighter uppercase text-[10px]">${it.cd || "—"}</span></td>
+            <td class="p-5 font-bold text-white/90 italic tracking-tight">${it.atividade || "—"}</td>
+            <td class="p-5 text-[11px] text-white/50 italic line-clamp-2">${it.obs || "—"}</td>
           </tr>
         `;
       }).join("");

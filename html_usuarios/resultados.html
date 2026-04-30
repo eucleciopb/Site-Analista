@@ -7,191 +7,184 @@
   <link rel="stylesheet" href="../css/styles.css" />
 
   <style>
-    .table-wrap{ overflow:auto; }
-    .table{ min-width: 1350px; }
-
-    .kpis{
-      display:grid;
-      grid-template-columns: repeat(4, minmax(180px, 1fr));
-      gap: 12px;
-      margin-top: 12px;
+    /* Custom utility for table wrap performance */
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 4px;
     }
-    .kpi{
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.04);
-      border-radius: 16px;
-      padding: 12px;
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
     }
-    .kpi .label{ font-size:12px; opacity:.8; }
-    .kpi .value{ font-size:22px; font-weight:900; margin-top:6px; }
-    .kpi .sub{ font-size:12px; opacity:.75; margin-top:6px; line-height:1.35; }
-
-    .pill{
-      display:inline-flex;align-items:center;
-      padding:6px 10px;border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.04);
-      font-weight:900;font-size:12px;white-space:nowrap;
-    }
-    .pill-ok{ color:#22c55e; border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); }
-    .pill-bad{ color:#ef4444; border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.10); }
-    .pill-warn{ color:#facc15; border-color: rgba(250,204,21,.35); background: rgba(250,204,21,.10); }
-    .pill-muted{ opacity:.9; }
-
-    .row-good{ background: rgba(34,197,94,.07) !important; }
-    .row-bad{ background: rgba(239,68,68,.07) !important; }
-    .row-late{ background: rgba(245,158,11,.08) !important; }
-
-    /* Anti-loop: tela de sessão expirada */
-    .blocker{
-      position:fixed; inset:0; z-index:9999;
-      background: rgba(0,0,0,.70);
-      display:none; align-items:center; justify-content:center;
-      padding: 18px;
-    }
-    .blocker .card{
-      width:min(520px, 100%);
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(17,24,39,.96);
-      box-shadow:0 24px 60px rgba(0,0,0,.55);
-      padding:16px;
-    }
-    .blocker .card h3{ margin:0 0 8px; }
-    .blocker .card p{ margin:0 0 12px; opacity:.85; }
-    .blocker .actions{ display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; }
-    .btn{
-      padding: 10px 12px; border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.04);
-      color: rgba(255,255,255,.95);
-      font-weight: 900;
-      cursor:pointer;
-    }
-    .btn.primary{ border-color: transparent; background: rgba(217,27,46,.95); }
-    .btn:hover{ filter:brightness(1.08); }
-
-    @media (max-width: 920px){
-      .kpis{ grid-template-columns: repeat(2, minmax(160px, 1fr)); }
-      .table{ min-width: 1100px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
     }
   </style>
 </head>
 
-<body class="bg">
+<body class="bg-tech selection:bg-[#ff3b3b]/30">
+<div class="bg-grid"></div>
 
-  <!-- Bloqueio de sessão (não redireciona em loop) -->
-  <div id="blocker" class="blocker">
-    <div class="card">
-      <h3>Sessão expirada</h3>
-      <p>Não encontrei o usuário logado no navegador. Volte para o Index e entre novamente.</p>
-      <div class="actions">
-        <button id="btnIrIndex" class="btn primary" type="button">Ir para o Index</button>
+<!-- Bloqueio de sessão -->
+<div id="blocker" class="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-3xl hidden items-center justify-center p-6">
+  <div class="glass-card p-8 md:p-12 max-w-md w-full text-center border-[#ff3b3b]/20 relative overflow-hidden">
+    <div class="absolute -top-10 -left-10 w-32 h-32 bg-[#ff3b3b] opacity-10 blur-3xl"></div>
+    <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#d91b2e] to-[#ff3b3b] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-[#ff3b3b]/20">
+      <span class="text-3xl font-black italic text-white tracking-widest translate-y-0.5">!</span>
+    </div>
+    <h3 class="text-2xl font-black italic uppercase tracking-tighter mb-4 text-white">Sessão Encerrada</h3>
+    <p class="text-xs text-white/40 uppercase tracking-widest leading-relaxed mb-10 font-bold italic">Protocolo de segurança ativado. Redirecionamento necessário para validação de credenciais.</p>
+    <button id="btnIrIndex" class="btn-cyber w-full !rounded-2xl">Reinicializar Sistema</button>
+  </div>
+</div>
+
+<header class="topbar animate-fade sticky top-0 z-50 backdrop-blur-md bg-black/40 border-b border-white/5">
+  <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+    <div class="flex items-center gap-5">
+      <div class="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-gradient-to-br from-[#d91b2e] to-[#ff3b3b] flex items-center justify-center shadow-lg shadow-[#ff3b3b]/20 transition-transform hover:scale-110">
+        <span class="text-base md:text-lg font-black italic">GP</span>
       </div>
+      <div>
+        <h2 class="text-lg md:text-xl font-black italic uppercase tracking-tight text-white">Performance Analytics</h2>
+        <div id="userInfo" class="hidden md:block text-[9px] font-bold uppercase tracking-[0.2em] text-[#ff3b3b] mt-0.5 italic">USUÁRIO: —</div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 md:gap-4">
+      <button id="btnMenu" class="h-10 px-4 md:px-6 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all border border-white/5 italic">Voltar</button>
+      <button id="btnLogout" class="h-10 w-10 md:w-auto md:px-6 rounded-xl bg-white/5 hover:bg-white/10 text-white/40 hover:text-white flex items-center justify-center text-[10px] font-black uppercase tracking-widest transition-all border border-white/5">
+        <span class="hidden md:inline">Sair</span>
+        <span class="md:hidden">✕</span>
+      </button>
     </div>
   </div>
+</header>
 
-  <header class="topbar">
-    <div>
-      <h2>Resultados dos Treinamentos</h2>
-      <div id="userInfo" class="hint" style="color:#d1d5db;margin-top:4px;"></div>
-      <div class="hint" style="opacity:.85;">Resumo do que você realizou e do que já foi validado.</div>
-    </div>
-
-    <div class="top-actions">
-      <button id="btnMenu" class="btn-secondary" type="button">Voltar ao Menu</button>
-      <button id="btnLogout" class="btn-secondary" type="button">Sair</button>
-    </div>
-  </header>
-
-  <main class="card wide">
-    <section class="row-between" style="align-items:flex-end;">
+<main class="max-w-7xl mx-auto p-4 md:p-6 lg:p-8 space-y-6 md:space-y-10">
+  
+  <section class="glass-card p-6 md:p-10 animate-fade [animation-delay:0.1s] relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-[#ff3b3b] opacity-[0.03] blur-[100px] pointer-events-none"></div>
+    
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-10 pb-6 border-b border-white/5 gap-6">
       <div>
-        <h3>Resumo</h3>
-        <p class="hint">Status: <b>Validado</b>, <b>Pendente</b> ou <b>Atrasado</b>. Meta: Atingiu / Não atingiu / Pendente.</p>
+        <h3 class="text-xl font-black italic uppercase text-white tracking-tight">Vetor de Metas</h3>
+        <p class="text-[10px] md:text-xs text-white/30 uppercase tracking-[0.2em] mt-1 italic font-bold">Consolidação em tempo real do banco de dados operacional</p>
       </div>
-
-      <div style="min-width:260px;">
-        <label for="monthPicker">Mês</label>
-        <input id="monthPicker" type="month" />
-      </div>
-    </section>
-
-    <div class="kpis">
-      <div class="kpi">
-        <div class="label">Total no mês</div>
-        <div class="value" id="kTotal">-</div>
-        <div class="sub">Treinamentos registrados por você</div>
-      </div>
-      <div class="kpi">
-        <div class="label">Validados</div>
-        <div class="value" id="kValidados">-</div>
-        <div class="sub">Avaliador concluiu (atingiu ou não)</div>
-      </div>
-      <div class="kpi">
-        <div class="label">Pendentes</div>
-        <div class="value" id="kPendentes">-</div>
-        <div class="sub">Ainda não validados e dentro do prazo</div>
-      </div>
-      <div class="kpi">
-        <div class="label">Atrasados</div>
-        <div class="value" id="kAtrasados">-</div>
-        <div class="sub">Pendentes e prazo já passou</div>
+      <div class="w-full md:w-56 group">
+        <label for="monthPicker" class="block text-[8px] font-black uppercase tracking-[0.4em] text-white/20 mb-2 italic ml-1">Ciclo Mensal</label>
+        <input id="monthPicker" type="month" class="input-cyber w-full text-xs h-12 !px-4" />
       </div>
     </div>
 
-    <p id="msg" class="msg"></p>
-
-    <hr class="sep" />
-
-    <section class="row-between" style="align-items:flex-end;">
-      <div style="flex:1; min-width:260px;">
-        <label for="busca">Buscar</label>
-        <input id="busca" type="text" placeholder="Treinamento, CD, desafio..." />
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <!-- KPIs Modernizados -->
+      <div class="glass-card bg-white/[0.02] p-6 border border-white/5 group hover:border-[#ff3b3b]/30 transition-all duration-500 rounded-3xl">
+        <div class="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 mb-3 italic">Volume Geral</div>
+        <div class="flex items-end gap-2">
+          <div class="text-4xl font-black italic tracking-tighter text-white" id="kTotal">-</div>
+          <div class="text-[10px] text-white/20 uppercase font-black mb-1.5 italic">Protocolos</div>
+        </div>
+        <div class="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+          <div class="h-full bg-white/20 w-full"></div>
+        </div>
       </div>
 
-      <div style="min-width:240px;">
-        <label for="fStatus">Status</label>
-        <select id="fStatus">
-          <option value="">Todos</option>
-          <option value="validado">Validado</option>
-          <option value="pendente">Pendente</option>
-          <option value="atrasado">Atrasado</option>
-        </select>
+      <div class="glass-card bg-[#22c55e]/[0.02] p-6 border border-white/5 group hover:border-[#22c55e]/30 transition-all duration-500 rounded-3xl">
+        <div class="text-[9px] font-black uppercase tracking-[0.3em] text-[#22c55e]/40 mb-3 italic">Eficácia Validada</div>
+        <div class="flex items-end gap-2">
+          <div class="text-4xl font-black italic tracking-tighter text-[#22c55e]" id="kValidados">-</div>
+          <div class="text-[10px] text-[#22c55e]/40 uppercase font-black mb-1.5 italic">Checks</div>
+        </div>
+        <div class="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+          <div class="h-full bg-[#22c55e] w-2/3"></div>
+        </div>
       </div>
 
-      <div style="min-width:240px;">
-        <label for="fMeta">Meta</label>
-        <select id="fMeta">
-          <option value="">Todas</option>
-          <option value="atingiu">Atingiu</option>
-          <option value="nao_atingiu">Não atingiu</option>
-          <option value="pendente">Pendente</option>
-        </select>
+      <div class="glass-card bg-yellow-500/[0.02] p-6 border border-white/5 group hover:border-yellow-500/30 transition-all duration-500 rounded-3xl">
+        <div class="text-[9px] font-black uppercase tracking-[0.3em] text-yellow-500/40 mb-3 italic">Vetor Pendente</div>
+        <div class="flex items-end gap-2">
+          <div class="text-4xl font-black italic tracking-tighter text-yellow-500" id="kPendentes">-</div>
+          <div class="text-[10px] text-yellow-500/40 uppercase font-black mb-1.5 italic">Fila</div>
+        </div>
+        <div class="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+          <div class="h-full bg-yellow-500/50 w-1/3 shadow-[0_0_8px_rgba(234,179,8,0.3)]"></div>
+        </div>
       </div>
-    </section>
 
-    <div class="table-wrap" style="margin-top:12px;">
-      <table class="table table-sticky">
-        <thead>
+      <div class="glass-card bg-[#ff3b3b]/[0.02] p-6 border border-white/5 group hover:border-[#ff3b3b]/30 transition-all duration-500 rounded-3xl">
+        <div class="text-[9px] font-black uppercase tracking-[0.3em] text-[#ff3b3b]/40 mb-3 italic">Anomalias (Atraso)</div>
+        <div class="flex items-end gap-2">
+          <div class="text-4xl font-black italic tracking-tighter text-[#ff3b3b]" id="kAtrasados">-</div>
+          <div class="text-[10px] text-[#ff3b3b]/40 uppercase font-black mb-1.5 italic">Falhas</div>
+        </div>
+        <div class="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+          <div class="h-full bg-[#ff3b3b] w-1/4 animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="glass-card p-0 md:p-2 animate-fade [animation-delay:0.2s] relative overflow-hidden bg-black/40">
+    <div class="p-6 md:p-10 border-b border-white/5 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+      <div class="flex-1 space-y-8">
+        <div>
+          <h3 class="text-lg font-black italic uppercase text-white">Log de Operações</h3>
+          <p class="text-[10px] text-white/30 uppercase tracking-[0.2em] mt-1 font-bold italic">Detalhamento granular de matrizes e respostas</p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="space-y-2">
+            <label for="busca" class="block text-[8px] font-black uppercase tracking-[0.4em] text-white/20 ml-1">Localizador Global</label>
+            <input id="busca" type="text" class="input-cyber w-full h-11 !px-4" placeholder="BUSCAR TREINO, CD..." />
+          </div>
+          <div class="space-y-2">
+            <label for="fStatus" class="block text-[8px] font-black uppercase tracking-[0.4em] text-white/20 ml-1">Filtro de Status</label>
+            <select id="fStatus" class="input-cyber w-full h-11 !px-4">
+              <option value="">Todos os Estados</option>
+              <option value="validado">Validado</option>
+              <option value="pendente">Pendente</option>
+              <option value="atrasado">Anomalia (Atrasado)</option>
+            </select>
+          </div>
+          <div class="space-y-2">
+            <label for="fMeta" class="block text-[8px] font-black uppercase tracking-[0.4em] text-white/20 ml-1">Filtro de Eficácia</label>
+            <select id="fMeta" class="input-cyber w-full h-11 !px-4">
+              <option value="">Todas as Métricas</option>
+              <option value="atingiu">Meta Atingida</option>
+              <option value="nao_atingiu">Meta Não Atingida</option>
+              <option value="pendente">Pendente para Cálculo</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="px-6 py-4 bg-black/40">
+      <p id="msg" class="text-[9px] font-black uppercase tracking-widest text-[#ff3b3b]/60 italic"></p>
+    </div>
+
+    <div class="overflow-x-auto custom-scrollbar">
+      <table class="w-full text-left border-collapse min-w-[1400px]">
+        <thead class="bg-white/5 text-[9px] font-black uppercase tracking-[0.2em] text-white/30">
           <tr>
-            <th style="width:120px;">Data</th>
-            <th style="width:260px;">Treinamento</th>
-            <th style="width:240px;">CD</th>
-            <th style="width:160px;">Prazo Apuração</th>
-            <th style="width:160px;">Status</th>
-            <th style="width:190px;">Meta (Atingiu?)</th>
-            <th style="width:180px;">Apurado em</th>
-            <th style="width:200px;">Avaliador</th>
-            <th>Comentário</th>
+            <th class="p-6 border-b border-white/5 w-[140px]">Cronologia</th>
+            <th class="p-6 border-b border-white/5 w-[280px]">Matriz de Estratégia</th>
+            <th class="p-6 border-b border-white/5 w-[240px]">Unidade Operacional</th>
+            <th class="p-6 border-b border-white/5 w-[160px]">Janela Limite</th>
+            <th class="p-6 border-b border-white/5 w-[160px]">Status</th>
+            <th class="p-6 border-b border-white/5 w-[180px]">Métrica Final</th>
+            <th class="p-6 border-b border-white/5 w-[150px]">Apurado em</th>
+            <th class="p-6 border-b border-white/5 w-[200px]">Supervisor Log</th>
+            <th class="p-6 border-b border-white/5">Relatório / Observações</th>
           </tr>
         </thead>
-        <tbody id="tbody">
-          <tr><td colspan="9" style="opacity:.8;">Carregando…</td></tr>
+        <tbody id="tbody" class="text-[11px] font-bold text-white/70 italic">
+          <tr><td colspan="9" class="p-24 text-center text-white/10 uppercase tracking-[0.4em] font-black">Escaneando Dimensões do Banco de Dados...</td></tr>
         </tbody>
       </table>
     </div>
-  </main>
+  </section>
+
+</main>
 
   <script type="module">
     import { db } from "../js/firebase.js";
@@ -292,49 +285,39 @@
     // STATUS: 3 estados
     function computeStatusTabela(dataApuracao, metaAtingida){
       const m = metaAtingida || "pendente";
-      if (m !== "pendente") return { key:"validado", label:"Validado", pill:"pill pill-ok" };
-      if (isLate(dataApuracao)) return { key:"atrasado", label:"Atrasado", pill:"pill pill-bad" };
-      return { key:"pendente", label:"Pendente", pill:"pill pill-warn" };
+      if (m !== "pendente") return { key:"validado", label:"VALIDADO", pill:"inline-flex py-1 px-2 rounded-lg bg-green-500/10 text-green-500 font-black uppercase text-[9px] tracking-widest border border-green-500/20" };
+      if (isLate(dataApuracao)) return { key:"atrasado", label:"ATRASADO", pill:"inline-flex py-1 px-2 rounded-lg bg-red-500/10 text-red-500 font-black uppercase text-[9px] tracking-widest border border-red-500/20" };
+      return { key:"pendente", label:"PENDENTE", pill:"inline-flex py-1 px-2 rounded-lg bg-yellow-500/10 text-yellow-500 font-black uppercase text-[9px] tracking-widest border border-yellow-500/20" };
     }
 
     function computeMetaPill(metaAtingida){
       const m = metaAtingida || "pendente";
-      if (m === "atingiu") return { key:m, label:"Atingiu", pill:"pill pill-ok" };
-      if (m === "nao_atingiu") return { key:m, label:"Não atingiu", pill:"pill pill-bad" };
-      return { key:"pendente", label:"Pendente", pill:"pill pill-muted" };
+      if (m === "atingiu") return { key:m, label:"ATINGIU", pill:"inline-flex py-1 px-2 rounded-lg bg-green-500/10 text-green-500 font-black uppercase text-[9px] tracking-widest border border-green-500/20 italic" };
+      if (m === "nao_atingiu") return { key:m, label:"NÃO ATINGIU", pill:"inline-flex py-1 px-2 rounded-lg bg-red-500/10 text-red-500 font-black uppercase text-[9px] tracking-widest border border-red-500/20 italic" };
+      return { key:"pendente", label:"PENDENTE", pill:"inline-flex py-1 px-2 rounded-lg bg-white/5 text-white/40 font-black uppercase text-[9px] tracking-widest border border-white/10" };
     }
 
     let TREINOS_CACHE = [];
     let APUR_MAP = {};
 
     async function loadTreinosMes(yyyyMM){
-      // 1) Query by uidKey
-      const q1 = query(
-        collection(db, TREINOS_COLLECTION),
-        where("uidKey", "==", usuarioKey)
-      );
+      const q1 = query(collection(db, TREINOS_COLLECTION), where("uidKey", "==", usuarioKey));
       const s1 = await getDocs(q1);
       const a1 = s1.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      // 2) Query by usuarioNome (case sensitive name fallback)
       let a2 = [];
       if(usuarioNome){
-        const q2 = query(
-          collection(db, TREINOS_COLLECTION),
-          where("usuarioNome", "==", usuarioNome)
-        );
+        const q2 = query(collection(db, TREINOS_COLLECTION), where("usuarioNome", "==", usuarioNome));
         const s2 = await getDocs(q2);
         a2 = s2.docs.map(d => ({ id: d.id, ...d.data() }));
       }
 
-      // Merge
       const map = new Map();
       [...a1, ...a2].forEach(x => map.set(x.id, x));
       const all = Array.from(map.values());
 
       TREINOS_CACHE = all.filter(t => String(t.data || "").slice(0,7) === yyyyMM);
 
-      // apurações: docId = id do treino
       const snapAp = await getDocs(collection(db, APURACOES_COLLECTION));
       const apMap = {};
       snapAp.forEach(d => apMap[d.id] = (d.data() || {}));
@@ -342,19 +325,10 @@
     }
 
     function calcKPIs(rows){
-      const total = rows.length;
-      let validados = 0, pendentes = 0, atrasados = 0;
-
-      for (const r of rows){
-        if (r.status.key === "validado") validados++;
-        else if (r.status.key === "atrasado") atrasados++;
-        else pendentes++;
-      }
-
-      kTotal.textContent = String(total);
-      kValidados.textContent = String(validados);
-      kPendentes.textContent = String(pendentes);
-      kAtrasados.textContent = String(atrasados);
+      kTotal.textContent = String(rows.length);
+      kValidados.textContent = String(rows.filter(r => r.status.key === "validado").length);
+      kPendentes.textContent = String(rows.filter(r => r.status.key === "pendente").length);
+      kAtrasados.textContent = String(rows.filter(r => r.status.key === "atrasado").length);
     }
 
     function render(){
@@ -381,35 +355,35 @@
       if (metaFilter) rows = rows.filter(r => r.meta.key === metaFilter);
 
       rows.sort((a,b) => String(b.t.data || "").localeCompare(String(a.t.data || "")));
-
       calcKPIs(rows);
 
       tbody.innerHTML = "";
       if (rows.length === 0){
-        tbody.innerHTML = `<tr><td colspan="9" style="opacity:.8;">Sem registros para este mês/filtros.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="p-20 text-center text-white/20 uppercase tracking-[0.2em] italic">Nenhum registro localizado nestes parâmetros</td></tr>`;
         return;
       }
 
       for (const r of rows){
         const { t, ap, status, meta } = r;
-
         const tr = document.createElement("tr");
-        if (status.key === "atrasado") tr.classList.add("row-late");
-        if (meta.key === "atingiu") tr.classList.add("row-good");
-        if (meta.key === "nao_atingiu") tr.classList.add("row-bad");
-
+        
+        let rowClass = "hover:bg-white/[0.02] transition-colors border-b border-white/5 group";
+        if (status.key === "atrasado") rowClass += " bg-red-500/[0.03]";
+        if (meta.key === "atingiu") rowClass += " bg-green-500/[0.02]";
+        if (meta.key === "nao_atingiu") rowClass += " bg-red-500/[0.02]";
+        
+        tr.className = rowClass;
         tr.innerHTML = `
-          <td>${toBR(t.data)}</td>
-          <td>${t.treinamento || "-"}</td>
-          <td>${t.cd || "-"}</td>
-          <td>${t.dataApuracao ? toBR(t.dataApuracao) : "-"}</td>
-          <td><span class="${status.pill}">${status.label}</span></td>
-          <td><span class="${meta.pill}">${meta.label}</span></td>
-          <td>${ap.dataApurada ? toBR(ap.dataApurada) : "-"}</td>
-          <td>${ap.avaliador || "-"}</td>
-          <td>${ap.comentario || "-"}</td>
+          <td class="p-4 font-mono text-[10px] text-white/40 italic">${toBR(t.data)}</td>
+          <td class="p-4 font-bold text-white/90 italic tracking-tight">${t.treinamento || "-"}</td>
+          <td class="p-4"><span class="px-2 py-1 rounded bg-white/5 text-white/70 font-black uppercase text-[10px] tracking-tighter">${t.cd || "-"}</span></td>
+          <td class="p-4 text-white/30 italic">${t.dataApuracao ? toBR(t.dataApuracao) : "-"}</td>
+          <td class="p-4"><span class="${status.pill}">${status.label}</span></td>
+          <td class="p-4"><span class="${meta.pill}">${meta.label}</span></td>
+          <td class="p-4 text-white/30">${ap.dataApurada ? toBR(ap.dataApurada) : "-"}</td>
+          <td class="p-4 text-white/40 italic uppercase tracking-tighter">${ap.avaliador || "-"}</td>
+          <td class="p-4 text-[10px] text-white/30 italic leading-relaxed line-clamp-2">${ap.comentario || "-"}</td>
         `;
-
         tbody.appendChild(tr);
       }
     }

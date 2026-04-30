@@ -297,43 +297,51 @@ function renderMonthSkeleton(yyyyMM) {
     tr.dataset.feriado = feriado ? "1" : "0";
 
     if (sunday) {
-      tr.classList.add("blocked");
+      tr.className = "bg-white/[0.01] opacity-40 grayscale pointer-events-none border-b border-white/5";
       tr.innerHTML = `
-        <td>${br}</td>
-        <td>${dia}</td>
-        <td colspan="3">Domingo bloqueado</td>
+        <td class="p-5 font-mono text-[10px] text-white/40">${br}</td>
+        <td class="p-5 font-black uppercase text-[10px] tracking-widest text-[#ff3b3b] italic">${dia}</td>
+        <td colspan="3" class="p-5 text-[10px] uppercase tracking-[0.2em] text-white/10 italic">Ciclo de Repouso / Bloqueado</td>
       `;
     } else {
       const atividadeDefault = feriado ? "Feriado / Ponto Facultativo" : "";
       const obsDefault = feriado ? buildFeriadoObs(iso) : "";
 
       if (feriado) {
-        tr.style.background = "rgba(250, 204, 21, 0.08)";
+        tr.className = "bg-[#fab005]/5 border-b border-[#fab005]/10 group";
+      } else {
+        tr.className = "hover:bg-white/[0.02] transition-colors border-b border-white/5 group";
       }
 
       tr.innerHTML = `
-        <td>${br}</td>
-        <td>${dia}</td>
-        <td>
+        <td class="p-5 font-mono text-[10px] text-white/50">${br}</td>
+        <td class="p-5 font-black uppercase text-[10px] tracking-widest ${feriado ? 'text-[#fab005]' : 'text-white/30 group-hover:text-white/70'} italic transition-colors">${dia}</td>
+        <td class="p-5">
           <input
-            class="field"
+            class="input-cyber w-full !h-11 !px-4 !text-[11px] !bg-black/20"
             data-field="cd"
             list="cdList"
-            placeholder="Pesquisar CD..."
+            placeholder="PROCURAR CD..."
             value=""
           >
         </td>
-        <td>
-          <select class="field" data-field="atividade">
+        <td class="p-5">
+          <select class="input-cyber w-full !h-11 !px-4 !text-[11px] !bg-black/20" data-field="atividade">
             ${atividadeOptions(atividadeDefault)}
           </select>
         </td>
-        <td>
-          <textarea
-            class="field"
-            data-field="obs"
-            placeholder="Clique para editar..."
-          >${obsDefault}</textarea>
+        <td class="p-5">
+          <div class="relative group/obs">
+            <textarea
+              class="input-cyber w-full !h-11 !py-3 !px-4 !text-[11px] overflow-hidden truncate italic !bg-black/20 cursor-pointer"
+              data-field="obs"
+              placeholder="DETALHES..."
+              readonly
+            >${obsDefault}</textarea>
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover/obs:opacity-100 transition-opacity pointer-events-none">
+              <span class="text-[8px] text-[#ff3b3b]">EDITAR</span>
+            </div>
+          </div>
         </td>
       `;
     }

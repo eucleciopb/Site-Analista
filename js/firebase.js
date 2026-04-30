@@ -1,18 +1,11 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDN7RF9UiFyDAFXsPsVQwSRONJB0t1Xpqg",
-  authDomain: "jornada-portal.firebaseapp.com",
-  projectId: "jornada-portal",
-  storageBucket: "jornada-portal.firebasestorage.app",
-  messagingSenderId: "669362296644",
-  appId: "1:669362296644:web:f590d9834a8e4e60012911"
-};
+import firebaseConfig from "../firebase-applet-config.json";
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// CRITICAL: Must use the firestoreDatabaseId from the config
+const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 const auth = getAuth(app);
 
 export const OperationType = {

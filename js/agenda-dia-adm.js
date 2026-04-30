@@ -122,17 +122,24 @@ async function loadAgendaDia(){
     if (hasDoc && preenchido) okCount++;
 
     const statusText = hasDoc
-      ? (preenchido ? "Lançado" : "Não preenchido")
-      : "Pendente";
+      ? (preenchido ? "SINCRONIZADO" : "LANÇAMENTO VAZIO")
+      : "PENDENTE";
 
-    const statusClass = (hasDoc && preenchido) ? "ok" : "pend";
+    const statusClass = (hasDoc && preenchido) 
+      ? "px-2 py-1 rounded-lg bg-green-500/10 text-green-500 font-black uppercase text-[10px] tracking-widest border border-green-500/20" 
+      : "px-2 py-1 rounded-lg bg-red-500/10 text-red-500 font-black uppercase text-[10px] tracking-widest border border-red-500/20";
 
     const tr = document.createElement("tr");
+    tr.className = "hover:bg-white/[0.02] transition-colors border-b border-white/5 group";
     tr.innerHTML = `
-      <td>${user}</td>
-      <td class="${statusClass}">${statusText}</td>
-      <td>${cd ? cd : "<span class='empty'>Não preenchido</span>"}</td>
-      <td>${atividade ? atividade : "<span class='empty'>Não preenchido</span>"}</td>
+      <td class="p-5 font-bold italic text-white/90 tracking-tight">${user}</td>
+      <td class="p-5"><span class="${statusClass}">${statusText}</span></td>
+      <td class="p-5">
+        <div class="px-2 py-1 rounded bg-white/5 text-white/70 font-black uppercase text-[10px] tracking-tighter inline-block">
+          ${cd ? cd : "<span class='opacity-20'>N/A</span>"}
+        </div>
+      </td>
+      <td class="p-5 text-white/40 italic">${atividade ? atividade : "<span class='opacity-20'>AGUARDANDO PROTOCOLO...</span>"}</td>
     `;
     tbody.appendChild(tr);
   }

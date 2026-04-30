@@ -1,0 +1,112 @@
+/* Obsidian Cyber Design System */
+:root {
+  --bg-deep: #05070A;
+  --bg-card: rgba(13, 17, 23, 0.7);
+  --accent: #ff3b3b;
+  --accent-glow: rgba(255, 59, 59, 0.3);
+  --text-primary: #EEF1F6;
+  --text-dim: rgba(238, 241, 246, 0.6);
+  --line: rgba(255, 255, 255, 0.08);
+  --line-bright: rgba(255, 255, 255, 0.15);
+  --glass-blur: blur(16px);
+}
+
+@import "tailwindcss";
+
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Fundo Atmosférico */
+.bg-tech {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(255, 59, 59, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(255, 59, 59, 0.05) 0%, transparent 40%),
+    linear-gradient(180deg, #05070A 0%, #0B1018 100%);
+}
+
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: 
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(circle at center, black, transparent 80%);
+  opacity: 0.2;
+}
+
+/* Cards Glassmorphism */
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  border-radius: 24px;
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: var(--line-bright);
+  box-shadow: 0 15px 45px rgba(0,0,0,0.6);
+}
+
+/* Botões Futuristas */
+.btn-cyber {
+  background: linear-gradient(135deg, #d91b2e, #ff3b3b);
+  color: white;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 12px 24px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.2);
+  box-shadow: 0 0 15px var(--accent-glow);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.btn-cyber:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 25px var(--accent-glow);
+  filter: brightness(1.1);
+}
+
+.btn-cyber:active {
+  transform: scale(0.98);
+}
+
+/* Inputs e Selects */
+.input-cyber {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  color: white;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.input-cyber:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade {
+  animation: fadeIn 0.6s ease-out forwards;
+}

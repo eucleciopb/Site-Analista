@@ -212,140 +212,151 @@
   </style>
 </head>
 
-<body class="bg">
+<body class="bg-tech">
+<div class="bg-grid"></div>
 
-<!-- ✅ TOPO FIXO (COMPACTA AO ROLAR) -->
-<header class="topbar" id="topbar">
-  <div class="topbar-inner">
-    <div class="topbar-left">
-      <h2>Apuração de Treinamentos</h2>
-      <div id="userInfo" class="hint" style="color:#d1d5db;"></div>
+<header class="topbar animate-fade" id="topbar">
+  <div class="flex items-center justify-between max-w-7xl mx-auto px-6 w-full">
+    <div class="flex items-center gap-4">
+      <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-[#1e40af] to-[#3b82f6] flex items-center justify-center shadow-lg shadow-[#3b82f6]/20">
+        <span class="text-lg font-black italic">ADM</span>
+      </div>
+      <div>
+        <h2 class="text-xl font-black italic uppercase tracking-tight">Verificação de Metas</h2>
+        <div id="userInfo" class="text-[10px] font-bold uppercase tracking-widest text-[#3b82f6]/60 mt-0.5 italic"></div>
+      </div>
     </div>
 
-    <div class="top-actions">
-      <button id="btnMenu" class="btn-secondary" type="button">Voltar ao Menu</button>
-      <button id="btnLogout" class="btn-secondary" type="button">Sair</button>
+    <div class="flex gap-3">
+      <button id="btnMenu" class="bg-white/5 hover:bg-white/10 text-white/70 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-white/5">Voltar</button>
+      <button id="btnLogout" class="bg-white/5 hover:bg-white/10 text-white/70 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-white/5">Sair</button>
     </div>
   </div>
 </header>
 
-<main class="card wide">
-  <section class="row-between" style="align-items:flex-end;">
-    <div>
-      <h3>Resumo para Apuração</h3>
-      <p class="hint">Status na tabela: <b>Validado</b>, <b>Atrasado</b> ou <b>Pendente</b>. Clique em <b>Validar</b> para marcar se atingiu a meta ou não.</p>
+<main class="max-w-7xl mx-auto p-6 space-y-6">
+  
+  <section class="glass-card p-8 animate-fade [animation-delay:0.1s]">
+    <div class="flex items-center justify-between mb-8 pb-4 border-b border-white/5 flex-wrap gap-4">
+      <div>
+        <h3 class="text-lg font-black italic uppercase">Console de Auditoria</h3>
+        <p class="text-[10px] text-white/30 uppercase tracking-widest mt-1 italic">Análise e validação de performance global</p>
+      </div>
+      <div class="w-48">
+        <label for="monthPicker" class="block text-[9px] font-black uppercase tracking-widest text-white/20 mb-1">Janela Temporal</label>
+        <input id="monthPicker" type="month" class="input-cyber w-full text-xs" />
+      </div>
     </div>
 
-    <div style="min-width:260px;">
-      <label for="monthPicker">Mês</label>
-      <input id="monthPicker" type="month" />
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="md:col-span-1">
+        <label class="block text-[9px] font-black uppercase tracking-widest text-white/20 mb-1.5">Filtro de Texto</label>
+        <input id="busca" type="text" class="input-cyber w-full text-xs" placeholder="Usuário, treino, CD..." />
+      </div>
+      <div>
+        <label class="block text-[9px] font-black uppercase tracking-widest text-white/20 mb-1.5">Classificação</label>
+        <select id="fPublico" class="input-cyber w-full text-xs">
+          <option value="">TODOS OS PÚBLICOS</option>
+          <option value="Gestor">GESTOR</option>
+          <option value="Vendedor">VENDEDOR</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-[9px] font-black uppercase tracking-widest text-white/20 mb-1.5">Unidade (CD)</label>
+        <input id="fCd" type="text" list="cdList" class="input-cyber w-full text-xs" placeholder="FILTRAR POR CD..." />
+        <datalist id="cdList"></datalist>
+      </div>
+      <div>
+        <label class="block text-[9px] font-black uppercase tracking-widest text-white/20 mb-1.5">Status de Validação</label>
+        <select id="fStatus" class="input-cyber w-full text-xs">
+          <option value="">TODOS OS STATUS</option>
+          <option value="validado">VALIDADO</option>
+          <option value="atrasado">ATRASADO</option>
+          <option value="pendente">PENDENTE</option>
+        </select>
+      </div>
+    </div>
+
+    <p id="msg" class="text-xs font-black uppercase tracking-widest text-white/40 italic mb-4"></p>
+
+    <div class="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+      <table class="w-full text-left border-collapse min-w-[1200px]">
+        <thead class="bg-white/5 text-[10px] font-black uppercase tracking-widest text-white/40">
+          <tr>
+            <th class="p-5 border-b border-white/5 w-[160px]">OPERADOR</th>
+            <th class="p-5 border-b border-white/5 w-[120px]">TIMESTAMP</th>
+            <th class="p-5 border-b border-white/5 w-[260px]">UNIDADE (CD)</th>
+            <th class="p-5 border-b border-white/5">PROTOCOLO DE TREINO</th>
+            <th class="p-5 border-b border-white/5 w-[160px]">DEADLINE</th>
+            <th class="p-5 border-b border-white/5 w-[160px]">ESTADO</th>
+            <th class="p-5 border-b border-white/5 w-[140px]">COMANDO</th>
+          </tr>
+        </thead>
+        <tbody id="tbody" class="text-xs font-medium text-white/80">
+          <tr><td colspan="7" class="p-20 text-center text-white/20 uppercase tracking-[0.2em] italic">Iniciando Sincronização de Dados Administrativos...</td></tr>
+        </tbody>
+      </table>
     </div>
   </section>
 
-  <p id="msg" class="msg"></p>
-
-  <hr class="sep" />
-
-  <section class="row-between" style="align-items:flex-end;">
-    <div style="flex:1; min-width:260px;">
-      <label for="busca">Buscar</label>
-      <input id="busca" type="text" placeholder="Usuário, treinamento, CD..." />
-    </div>
-
-    <div style="min-width:220px;">
-      <label for="fPublico">Público</label>
-      <select id="fPublico">
-        <option value="">Todos</option>
-        <option value="Gestor">Gestor</option>
-        <option value="Vendedor">Vendedor</option>
-      </select>
-    </div>
-
-    <div style="min-width:260px;">
-      <label for="fCd">CD</label>
-      <input id="fCd" type="text" list="cdList" placeholder="Filtrar por CD..." />
-      <datalist id="cdList"></datalist>
-    </div>
-
-    <div style="min-width:240px;">
-      <label for="fStatus">Status</label>
-      <select id="fStatus">
-        <option value="">Todos</option>
-        <option value="validado">Validado</option>
-        <option value="atrasado">Atrasado</option>
-        <option value="pendente">Pendente</option>
-      </select>
-    </div>
-  </section>
-
-  <div class="table-wrap" style="margin-top:12px;">
-    <table class="table table-sticky">
-      <thead>
-        <tr>
-          <th style="width:160px;">Usuário</th>
-          <th style="width:120px;">Data</th>
-          <th style="width:260px;">CD</th>
-          <th>Treinamento</th>
-          <th style="width:160px;">Prazo Apuração</th>
-          <th style="width:160px;">Status</th>
-          <th style="width:140px;">Ação</th>
-        </tr>
-      </thead>
-      <tbody id="tbody">
-        <tr><td colspan="7" style="opacity:.8;">Carregando…</td></tr>
-      </tbody>
-    </table>
-  </div>
 </main>
 
-<!-- ===== MODAL VALIDAR ===== -->
-<div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true">
-  <div class="modal">
-    <div class="modal-header">
-      <div>
-        <h3 id="mTitle">Validar Meta</h3>
-        <div class="sub" id="mSub"></div>
-      </div>
-      <button class="modal-close" id="mClose" type="button">Fechar</button>
-    </div>
+<!-- MODAL VALIDAR OBSIDIAN CYBER -->
+<div id="modalBackdrop" class="fixed inset-0 z-[9999] hidden items-center justify-center p-6">
+  <div class="absolute inset-0 bg-black/80 backdrop-blur-md" data-close="1"></div>
+  
+  <div class="relative w-full max-w-4xl p-px rounded-3xl bg-gradient-to-br from-white/10 to-transparent shadow-2xl overflow-hidden">
+    <!-- Glow ADM -->
+    <div class="absolute -top-24 -left-24 w-48 h-48 bg-[#3b82f6] opacity-10 blur-[80px]"></div>
 
-    <div class="modal-body">
-      <div class="box">
-        <label>Desafio</label>
-        <div class="val" id="mDesafio">-</div>
+    <div class="glass-card p-8 bg-[#070A0F]/95">
+      <header class="flex justify-between items-start mb-8 pb-4 border-b border-white/5">
+        <div>
+          <p class="text-[10px] font-black uppercase tracking-widest text-[#3b82f6] mb-1 italic">Protocolo de Decisão Tática</p>
+          <h3 class="text-2xl font-black italic uppercase tracking-tight" id="mTitle">Validar Meta Operacional</h3>
+          <p class="text-[10px] text-white/30 uppercase tracking-widest mt-1" id="mSub"></p>
+        </div>
+        <button id="mClose" class="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-white/50">✕</button>
+      </header>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <div class="p-4 rounded-xl bg-white/5 border border-white/5">
+          <label class="text-[9px] font-black uppercase tracking-widest text-[#3b82f6] mb-2 block">Objetivo (Desafio)</label>
+          <div class="text-sm font-bold italic text-white/90" id="mDesafio">-</div>
+        </div>
+        <div class="p-4 rounded-xl bg-white/5 border border-white/5">
+          <label class="text-[9px] font-black uppercase tracking-widest text-[#3b82f6] mb-2 block">KPI Alvo (Meta)</label>
+          <div class="text-sm font-bold italic text-white/90" id="mMeta">-</div>
+        </div>
+        <div class="p-4 rounded-xl bg-white/5 border border-white/5">
+          <label class="text-[9px] font-black uppercase tracking-widest text-[#3b82f6] mb-2 block">Janela de Apuração</label>
+          <div class="text-sm font-bold italic text-white/90" id="mPrazoData">-</div>
+        </div>
+        <div class="p-4 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between">
+          <label class="text-[9px] font-black uppercase tracking-widest text-[#3b82f6] mb-0">Status Temporal</label>
+          <div id="mPrazoStatus"></div>
+        </div>
       </div>
 
-      <div class="box">
-        <label>Meta</label>
-        <div class="val" id="mMeta">-</div>
+      <div class="space-y-6 mb-10">
+        <div>
+          <label for="mComentario" class="ml-1 text-[10px] font-black uppercase tracking-widest text-white/30 mb-1.5 block italic">Logs de Auditoria</label>
+          <textarea id="mComentario" class="input-cyber w-full h-32 py-4 px-5 text-sm" placeholder="Insira as evidências da apuração..."></textarea>
+        </div>
+        <div>
+          <label for="mDataApurada" class="ml-1 text-[10px] font-black uppercase tracking-widest text-white/30 mb-1.5 block italic">Data de Referência (Opcional)</label>
+          <input id="mDataApurada" class="input-cyber w-64 text-sm" type="date" />
+        </div>
       </div>
 
-      <div class="box">
-        <label>Data limite apuração</label>
-        <div class="val" id="mPrazoData">-</div>
-      </div>
-
-      <div class="box">
-        <label>Em dia ou atrasado?</label>
-        <div class="val" id="mPrazoStatus">-</div>
-      </div>
-
-      <div class="box" style="grid-column: 1 / -1;">
-        <label>Comentário do avaliador</label>
-        <input id="mComentario" class="field" maxlength="140" placeholder="Ex.: Evidência confirmada no painel/rota..." />
-      </div>
-
-      <div class="box" style="grid-column: 1 / -1;">
-        <label>Data em que foi apurado (opcional)</label>
-        <input id="mDataApurada" class="field" type="date" />
-      </div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn-state muted" id="btnPendente" type="button">Pendente</button>
-      <button class="btn-state bad" id="btnNaoAtingiu" type="button">Não atingiu a meta</button>
-      <button class="btn-state ok" id="btnAtingiu" type="button">Atingiu a meta</button>
-      <button class="btn-mini primary" id="btnSalvarModal" type="button">Salvar</button>
+      <footer class="flex flex-wrap gap-4 items-center justify-between pt-6 border-t border-white/5">
+        <div class="flex gap-2">
+          <button class="bg-white/5 hover:bg-white/10 text-white/60 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/10 italic" id="btnPendente">Pendente</button>
+          <button class="bg-red-500/10 hover:bg-red-500/20 text-red-500 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-red-500/20 italic" id="btnNaoAtingiu">Não Atingiu</button>
+          <button class="bg-green-500/10 hover:bg-green-500/20 text-green-500 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-green-500/20 italic" id="btnAtingiu">Atingiu Meta</button>
+        </div>
+        <button id="btnSalvarModal" class="btn-cyber !px-12 !h-12 !bg-[#3b82f6]">Confirmar Registro</button>
+      </footer>
     </div>
   </div>
 </div>
@@ -470,9 +481,9 @@
 
   function computeStatusTabela(dataApuracao, metaAtingida){
     const m = metaAtingida || "pendente";
-    if (m !== "pendente") return { key:"validado", label:"Validado", cls:"status-validado" };
-    if (isLate(dataApuracao)) return { key:"atrasado", label:"Atrasado", cls:"status-atrasado" };
-    return { key:"pendente", label:"Pendente", cls:"status-pendente" };
+    if (m !== "pendente") return { key:"validado", label:"VALIDADO", cls:"px-2 py-1 rounded bg-green-500/10 text-green-500 font-black uppercase text-[10px] tracking-widest border border-green-500/20" };
+    if (isLate(dataApuracao)) return { key:"atrasado", label:"ATRASADO", cls:"px-2 py-1 rounded bg-red-500/10 text-red-500 font-black uppercase text-[10px] tracking-widest border border-red-500/20" };
+    return { key:"pendente", label:"PENDENTE", cls:"px-2 py-1 rounded bg-yellow-500/10 text-yellow-500 font-black uppercase text-[10px] tracking-widest border border-yellow-500/20" };
   }
 
   /* =========================
@@ -549,8 +560,8 @@
     const prazo = t.dataApuracao || "";
     mPrazoData.textContent = prazo ? `${toBR(prazo)} (${prazo})` : "Sem data";
     mPrazoStatus.innerHTML = isLate(prazo)
-      ? `<span class="status-pill status-atrasado">Atrasado</span>`
-      : `<span class="status-pill status-validado" style="opacity:.85;">Em dia</span>`;
+      ? `<span class="px-2 py-1 rounded bg-red-500/10 text-red-500 font-black uppercase text-[9px] tracking-widest border border-red-500/20">ATRASADO</span>`
+      : `<span class="px-2 py-1 rounded bg-green-500/10 text-green-500 font-black uppercase text-[9px] tracking-widest border border-green-500/20 italic">EM DIA</span>`;
 
     mComentario.value = ap.comentario || "";
     mDataApurada.value = ap.dataApurada || "";
@@ -652,25 +663,28 @@
     });
 
     tbody.innerHTML = "";
-
     if (rows.length === 0){
-      tbody.innerHTML = `<tr><td colspan="7" style="opacity:.8;">Sem registros para este mês/filtros.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="p-20 text-center text-white/20 uppercase tracking-[0.2em] italic">Nenhum registro localizado para auditoria</td></tr>`;
       return;
     }
 
     for (const {t, st} of rows){
       const prazo = t.dataApuracao ? toBR(t.dataApuracao) : "-";
       const tr = document.createElement("tr");
+      tr.className = "hover:bg-white/[0.02] transition-colors border-b border-white/5 group";
 
       tr.innerHTML = `
-        <td>${t.usuarioNome || "-"}</td>
-        <td>${toBR(t.data)}</td>
-        <td>${t.cd || "-"}</td>
-        <td>${t.treinamento || "-"}</td>
-        <td>${prazo}</td>
-        <td><span class="status-pill ${st.cls}">${st.label}</span></td>
-        <td>
-          <button class="btn-mini primary" type="button" data-validate="${t.id}">Validar</button>
+        <td class="p-5 font-bold italic tracking-tight text-white/90">
+          <div class="text-[10px] font-black uppercase text-[#3b82f6] mb-0.5">${t.publico || ""}</div>
+          ${t.usuarioNome || "-"}
+        </td>
+        <td class="p-5 font-mono text-[10px] text-white/40 italic">${toBR(t.data)}</td>
+        <td class="p-5"><span class="px-2 py-1 rounded bg-white/5 text-white/70 font-black uppercase text-[10px] tracking-tighter">${t.cd || "-"}</span></td>
+        <td class="p-5 font-bold text-white/80 italic text-[11px] leading-tight">${t.treinamento || "-"}</td>
+        <td class="p-5 text-white/30 italic">${prazo}</td>
+        <td class="p-5"><span class="${st.cls}">${st.label}</span></td>
+        <td class="p-5">
+          <button class="btn-cyber !py-2 !px-4 !text-[10px] !bg-[#3b82f6]/20 !border-[#3b82f6]/30 hover:!bg-[#3b82f6]" type="button" data-validate="${t.id}">AUDITAR</button>
         </td>
       `;
 

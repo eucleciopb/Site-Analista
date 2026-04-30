@@ -98,48 +98,77 @@
 </style>
 </head>
 
-<body>
-  <div class="card">
+<body class="bg-tech">
+<div class="bg-grid"></div>
 
-    <div class="header">
+<header class="topbar animate-fade">
+  <div class="flex items-center justify-between max-w-7xl mx-auto px-6 w-full">
+    <div class="flex items-center gap-4">
+      <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-[#1e40af] to-[#3b82f6] flex items-center justify-center shadow-lg shadow-[#3b82f6]/20">
+        <span class="text-lg font-black italic">ADM</span>
+      </div>
       <div>
-        <h2>Agenda do Dia — Admin</h2>
-        <small id="todayLabel">Data: —</small>
-        <div class="hint" id="hint">Carregando…</div>
-        <div class="error" id="errorBox"></div>
-      </div>
-
-      <div class="actions">
-        <button class="btn" id="btnReload">Atualizar</button>
-
-        <!-- ✅ caminho certo -->
-        <button class="btn" onclick="location.href='../html_menus/menuadm.html'">Voltar</button>
+        <h2 class="text-xl font-black italic uppercase tracking-tight">Monitor de Operações</h2>
+        <div id="todayLabel" class="text-[10px] font-bold uppercase tracking-widest text-[#3b82f6]/60 mt-0.5 italic">DATA: —</div>
       </div>
     </div>
 
-    <hr>
-
-    <div class="kpis">
-      <div class="kpi">Total usuários: <span id="kpiUsers">0</span></div>
-      <div class="kpi">Lançaram hoje: <span id="kpiOk">0</span></div>
-      <div class="kpi">Pendentes: <span id="kpiPend">0</span></div>
+    <div class="flex gap-3">
+      <button id="btnReload" class="btn-cyber !px-6 !py-2 !text-[10px] !bg-white/5 !border-white/10 hover:!bg-white/10">Atualizar</button>
+      <button onclick="location.href='../html_menus/menuadm.html'" class="bg-white/5 hover:bg-white/10 text-white/70 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-white/5">Voltar</button>
     </div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Usuário</th>
-          <th>Status</th>
-          <th>CD / Local</th>
-          <th>Atividade</th>
-        </tr>
-      </thead>
-      <tbody id="tbody">
-        <tr><td colspan="4">Carregando…</td></tr>
-      </tbody>
-    </table>
-
   </div>
+</header>
+
+<main class="max-w-7xl mx-auto p-6 space-y-6">
+  
+  <section class="glass-card p-8 animate-fade [animation-delay:0.1s]">
+    <div class="flex items-center justify-between mb-8 pb-4 border-b border-white/5 flex-wrap gap-4">
+      <div>
+        <h3 class="text-lg font-black italic uppercase">Telemetria de Campo</h3>
+        <p id="hint" class="text-[10px] text-white/30 uppercase tracking-widest mt-1 italic">Status de sincronização dos analistas</p>
+      </div>
+      <div class="error text-[10px] font-black uppercase text-red-500" id="errorBox"></div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+      <div class="glass-card bg-white/[0.03] p-5 border border-white/5 text-center">
+        <div class="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 mb-2 italic">Total Ativos</div>
+        <div class="text-3xl font-black italic tracking-tighter text-white" id="kpiUsers">0</div>
+        <div class="text-[9px] uppercase tracking-widest text-[#3b82f6] mt-1">Operadores no Sistema</div>
+      </div>
+
+      <div class="glass-card bg-white/[0.03] p-5 border border-white/5 text-center">
+        <div class="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 mb-2 italic">Sincronizados</div>
+        <div class="text-3xl font-black italic tracking-tighter text-green-500" id="kpiOk">0</div>
+        <div class="text-[9px] uppercase tracking-widest text-green-500/60 mt-1">Lançamentos Confirmados</div>
+      </div>
+
+      <div class="glass-card bg-white/[0.03] p-5 border border-white/5 text-center">
+        <div class="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 mb-2 italic">Pendências</div>
+        <div class="text-3xl font-black italic tracking-tighter text-red-500" id="kpiPend">0</div>
+        <div class="text-[9px] uppercase tracking-widest text-red-500/60 mt-1">Aguardando Lançamento</div>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+      <table class="w-full text-left border-collapse">
+        <thead class="bg-white/5 text-[10px] font-black uppercase tracking-widest text-white/40">
+          <tr>
+            <th class="p-5 border-b border-white/5">NOME DO ANALISTA</th>
+            <th class="p-5 border-b border-white/5 w-[140px]">STATUS LOG</th>
+            <th class="p-5 border-b border-white/5 w-[280px]">LOCALIZAÇÃO (CD)</th>
+            <th class="p-5 border-b border-white/5 w-[260px]">ATRIBUIÇÃO ATUAL</th>
+          </tr>
+        </thead>
+        <tbody id="tbody" class="text-xs font-medium text-white/80 italic">
+          <tr><td colspan="4" class="p-20 text-center text-white/20 uppercase tracking-[0.2em] italic">Rastreando Operadores...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
 
   <!-- ✅ CAMINHO CERTO: sai de /html adm/ e vai para /js/ -->
   <script type="module" src="../js/agenda-dia-adm.js"></script>

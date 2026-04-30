@@ -7,87 +7,95 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 
-<body class="bg">
+<body class="bg-tech">
+<div class="bg-grid"></div>
 
-<header class="topbar">
-  <div>
-    <h2>Cadastro de Treinamentos</h2>
-    <div id="userInfo" class="hint" style="color:#d1d5db;margin-top:4px;"></div>
-  </div>
+<header class="topbar animate-fade">
+  <div class="flex items-center justify-between max-w-7xl mx-auto px-6 w-full">
+    <div class="flex items-center gap-4">
+      <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-[#1e40af] to-[#3b82f6] flex items-center justify-center shadow-lg shadow-[#3b82f6]/20">
+        <span class="text-lg font-black italic">ADM</span>
+      </div>
+      <div>
+        <h2 class="text-xl font-black italic uppercase tracking-tight text-white">Gestor de Matrizes</h2>
+        <div id="userInfo" class="text-[10px] font-bold uppercase tracking-widest text-[#3b82f6]/60 mt-0.5 italic">USUÁRIO: —</div>
+      </div>
+    </div>
 
-  <div class="top-actions">
-    <button id="btnMenu" class="btn-secondary" type="button">Voltar ao Menu</button>
-    <button id="btnLogout" class="btn-secondary" type="button">Sair</button>
+    <div class="flex gap-3">
+      <button id="btnMenu" class="bg-white/5 hover:bg-white/10 text-white/70 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-white/5">Voltar</button>
+      <button id="btnLogout" class="bg-white/5 hover:bg-white/10 text-white/70 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-white/5">Sair</button>
+    </div>
   </div>
 </header>
 
-<main class="card wide">
+<main class="max-w-7xl mx-auto p-6 space-y-6">
+  
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- FORMULÁRIO DE CADASTRO -->
+    <section class="lg:col-span-4 glass-card p-8 animate-fade [animation-delay:0.1s] self-start">
+      <div class="mb-8">
+        <h3 id="formTitle" class="text-lg font-black italic uppercase tracking-widest text-[#3b82f6]">Nova Matriz</h3>
+        <p class="text-[10px] text-white/30 uppercase tracking-widest mt-1 italic font-bold">Configuração de protocolo de capacitação</p>
+      </div>
 
-  <section class="row-between">
-    <div>
-      <h3 id="formTitle">Novo Treinamento</h3>
-      <p class="hint">Cadastre o nome e os links relacionados. Salva no Firebase (Firestore).</p>
-    </div>
-  </section>
+      <div class="space-y-6">
+        <div>
+          <label class="block text-[9px] font-black uppercase tracking-widest text-white/20 mb-2 italic">Identificação do Treinamento</label>
+          <input id="nomeTreino" type="text" class="input-cyber w-full text-xs" maxlength="100" placeholder="EX: PROTOCOLO DE VENDAS..." />
+        </div>
 
-  <hr class="sep" />
+        <div>
+          <label class="block text-[9px] font-black uppercase tracking-widest text-white/20 mb-2 italic">Acesso ao Material (URL)</label>
+          <input id="linkTreino" type="url" class="input-cyber w-full text-xs" placeholder="https://..." />
+        </div>
 
-  <section class="form-grid">
+        <div>
+          <label class="block text-[9px] font-black uppercase tracking-widest text-white/20 mb-2 italic">Sistema de Avaliação (Forms)</label>
+          <input id="linkForms" type="url" class="input-cyber w-full text-xs" placeholder="https://forms.gle/..." />
+        </div>
 
-    <div>
-      <label>Nome do treinamento</label>
-      <input id="nomeTreino" type="text" maxlength="100" placeholder="Ex: Coaching no PDV" />
-    </div>
+        <div class="pt-4 flex flex-col gap-3">
+          <button id="btnSalvar" class="btn-cyber !h-12 text-sm !bg-[#3b82f6]">ADICIONAR PROTOCOLO</button>
+          <button id="btnCancelar" class="bg-white/5 hover:bg-white/10 text-white/40 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/5 italic" style="display:none;">CANCELAR EDIÇÃO</button>
+        </div>
+      </div>
 
-    <div>
-      <label>Link do Treinamento</label>
-      <input id="linkTreino" type="url" placeholder="https://..." />
-    </div>
+      <p id="msg" class="text-[10px] font-black uppercase tracking-widest text-white/40 italic mt-6 text-center h-4"></p>
+    </section>
 
-    <div>
-      <label>Link do Forms</label>
-      <input id="linkForms" type="url" placeholder="https://forms.gle/..." />
-    </div>
+    <!-- LISTAGEM -->
+    <section class="lg:col-span-8 glass-card p-8 animate-fade [animation-delay:0.2s]">
+      <div class="flex items-center justify-between mb-8 pb-4 border-b border-white/5 flex-wrap gap-4">
+        <div>
+          <h3 class="text-lg font-black italic uppercase">Matrizes Cadastradas</h3>
+          <p class="text-[10px] text-white/30 uppercase tracking-widest mt-1 italic font-bold">Repositório global de competências</p>
+        </div>
+        <div class="w-64">
+          <input id="busca" type="text" class="input-cyber w-full text-xs" placeholder="LOCALIZAR MATRIZ..." />
+        </div>
+      </div>
 
-    <div class="page-actions" style="grid-column:1/-1; justify-content:flex-end; gap:10px;">
-      <button id="btnCancelar" class="btn-secondary" type="button" style="display:none;">Cancelar</button>
-      <button id="btnSalvar" type="button">Adicionar</button>
-    </div>
+      <div class="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+        <table class="w-full text-left border-collapse min-w-[700px]">
+          <thead class="bg-white/5 text-[10px] font-black uppercase tracking-widest text-white/40">
+            <tr>
+              <th class="p-5 border-b border-white/5 w-[60px]">#</th>
+              <th class="p-5 border-b border-white/5">PROTOCOLOS ATIVOS</th>
+              <th class="p-5 border-b border-white/5 w-[100px]">MATERIAL</th>
+              <th class="p-5 border-b border-white/5 w-[100px]">FORMS</th>
+              <th class="p-5 border-b border-white/5 w-[140px]">AUTOR</th>
+              <th class="p-5 border-b border-white/5 w-[160px] text-right px-8">AÇÕES</th>
+            </tr>
+          </thead>
+          <tbody id="tbody" class="text-xs font-medium text-white/80 italic">
+            <tr><td colspan="6" class="p-20 text-center text-white/20 uppercase tracking-[0.2em] italic">Varrendo Banco de Dados...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-  </section>
-
-  <p id="msg" class="msg"></p>
-
-  <hr class="sep" />
-
-  <section class="row-between">
-    <div>
-      <h3>Treinamentos Cadastrados</h3>
-      <p class="hint">Lista global (Firestore) — aparece para todos na Biblioteca.</p>
-    </div>
-
-    <div>
-      <label>Buscar</label>
-      <input id="busca" type="text" placeholder="Digite para filtrar..." />
-    </div>
-  </section>
-
-  <div class="table-wrap" style="margin-top:12px;">
-    <table class="table table-sticky">
-      <thead>
-        <tr>
-          <th style="width:70px;">#</th>
-          <th>Nome</th>
-          <th style="width:140px;">Treinamento</th>
-          <th style="width:120px;">Forms</th>
-          <th style="width:160px;">Cadastrado por</th>
-          <th style="width:220px;">Ações</th>
-        </tr>
-      </thead>
-      <tbody id="tbody">
-        <tr><td colspan="6" style="opacity:.8;">Carregando…</td></tr>
-      </tbody>
-    </table>
   </div>
 
 </main>
@@ -207,17 +215,22 @@
 
     filtered.forEach((t, i) => {
       const tr = document.createElement("tr");
+      tr.className = "hover:bg-white/[0.02] transition-colors border-b border-white/5 group";
       tr.innerHTML = `
-        <td>${i+1}</td>
-        <td>${t.nome || "-"}</td>
-        <td>${t.linkTreino ? `<a href="${t.linkTreino}" target="_blank" rel="noopener">Abrir</a>` : "-"}</td>
-        <td>${t.linkForms ? `<a href="${t.linkForms}" target="_blank" rel="noopener">Abrir</a>` : "-"}</td>
-        <td style="opacity:.9;">${t.createdBy || "-"}</td>
-        <td style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="btn-secondary" type="button" data-edit="${t.id}">Editar</button>
-          <button class="btn-secondary" type="button" data-del="${t.id}" style="border-color: rgba(255,59,59,.25);">
-            Excluir
-          </button>
+        <td class="p-5 font-mono text-[10px] text-white/30">${i+1}</td>
+        <td class="p-5 font-bold italic tracking-tight text-white/90 uppercase text-sm">${t.nome || "-"}</td>
+        <td class="p-5">
+          ${t.linkTreino ? `<a href="${t.linkTreino}" target="_blank" rel="noopener" class="bg-white/5 hover:bg-white/10 text-white/60 px-3 py-1 rounded text-[10px] font-black uppercase tracking-tighter border border-white/5 transition-all">Abrir</a>` : "<span class='opacity-20'>-</span>"}
+        </td>
+        <td class="p-5">
+          ${t.linkForms ? `<a href="${t.linkForms}" target="_blank" rel="noopener" class="bg-[#3b82f6]/10 hover:bg-[#3b82f6] hover:text-white text-[#3b82f6] px-3 py-1 rounded text-[10px] font-black uppercase tracking-tighter border border-[#3b82f6]/20 transition-all">Forms</a>` : "<span class='opacity-20'>-</span>"}
+        </td>
+        <td class="p-5 text-[10px] text-white/40 uppercase font-bold italic">${t.createdBy || "-"}</td>
+        <td class="p-5 text-right px-8">
+          <div class="flex justify-end gap-2">
+            <button class="bg-white/5 hover:bg-white/10 text-white/60 px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest border border-white/5 transition-all" type="button" data-edit="${t.id}">Editar</button>
+            <button class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest border border-red-500/20 transition-all" type="button" data-del="${t.id}">Excluir</button>
+          </div>
         </td>
       `;
       tbody.appendChild(tr);

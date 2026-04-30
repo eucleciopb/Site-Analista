@@ -1,107 +1,359 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Menu | Jornada</title>
-  <link rel="stylesheet" href="../css/styles.css" />
-</head>
+<!DOCTYPE html>
 
-<body>
-
-  <main class="container">
-    <section class="card">
-
-      <div class="header">
-        <div class="logo">GP</div>
-        <div>
-          <h1 id="welcomeText">Carregando...</h1>
-          <p>Menu Principal</p>
+<html class="dark" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Team Management - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#eff4ff",
+                        "on-tertiary-fixed-variant": "#005048",
+                        "secondary-fixed": "#e1e0ff",
+                        "on-tertiary-container": "#009485",
+                        "primary-fixed-dim": "#bec6e0",
+                        "tertiary-fixed-dim": "#4fdbc8",
+                        "tertiary-container": "#00201c",
+                        "surface-dim": "#cbdbf5",
+                        "surface-variant": "#d3e4fe",
+                        "surface-container-high": "#dce9ff",
+                        "outline-variant": "#c6c6cd",
+                        "inverse-primary": "#bec6e0",
+                        "surface-bright": "#f8f9ff",
+                        "on-secondary": "#ffffff",
+                        "primary-container": "#131b2e",
+                        "background": "#f8f9ff",
+                        "on-surface-variant": "#45464d",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#213145",
+                        "tertiary-fixed": "#71f8e4",
+                        "tertiary": "#000000",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-secondary-fixed-variant": "#2f2ebe",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#e5eeff",
+                        "surface": "#f8f9ff",
+                        "surface-tint": "#565e74",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#76777d",
+                        "on-tertiary-fixed": "#00201c",
+                        "on-surface": "#0b1c30",
+                        "on-primary-container": "#7c839b",
+                        "secondary-container": "#6063ee",
+                        "on-secondary-container": "#fffbff",
+                        "on-primary-fixed": "#131b2e",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#07006c",
+                        "primary": "#000000",
+                        "primary-fixed": "#dae2fd",
+                        "on-background": "#0b1c30",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "secondary": "#4648d4",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sm": "12px",
+                        "container-margin": "40px",
+                        "lg": "24px",
+                        "xs": "8px",
+                        "md": "16px",
+                        "base": "4px",
+                        "gutter": "24px",
+                        "xl": "32px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "h2": ["Inter"],
+                        "h1": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "h3": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "h2": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "h1": ["36px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "h3": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "label-sm": ["11px", {"lineHeight": "1", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #070A0F;
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(220, 38, 38, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 100% 100%, rgba(220, 38, 38, 0.08) 0%, transparent 40%),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+            font-family: 'Inter', sans-serif;
+            color: #F8FAFC;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .red-glow-hover:hover {
+            box-shadow: 0 0 25px rgba(220, 38, 38, 0.15);
+            border-color: rgba(220, 38, 38, 0.3);
+        }
+        .animate-pulse-red {
+            animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .5; transform: scale(1.2); }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col overflow-x-hidden">
+<!-- TopAppBar Fragmented Execution -->
+<nav class="fixed top-0 z-50 w-full flex items-center justify-between px-6 py-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 shadow-sm dark:shadow-indigo-900/20">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-gradient-to-br from-red-600 to-red-800 rounded-lg flex items-center justify-center font-black text-white text-xl tracking-tighter">
+                GP
+            </div>
+<div class="flex flex-col">
+<span class="font-inter text-sm font-medium tracking-wide text-indigo-600 dark:text-indigo-400">Team Management</span>
+<span class="text-slate-400 text-[10px] uppercase tracking-widest font-bold">Menu Principal</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 transition-colors">
+<div class="w-8 h-8 rounded-full overflow-hidden border-2 border-indigo-500/30">
+<img alt="Alex Rivera" data-alt="A professional studio headshot of a team leader named Alex Rivera. He has a warm, confident expression and is wearing a modern charcoal suit. The background is a soft-focus corporate office with cool blue and grey tones. The lighting is crisp and professional, highlighting a sophisticated tech-industry aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHDr_nKlKEPmhnO-1Qixxw5spbiiZ16KxZwGHnCD6lU1_mrmKQ6zv4rSIgNLrNn2xOTI1GTZcrcUoBi4vpbK6Me7J_WRa0IA1i2ctLdWimJSl-TkVY9BpERk4_UWW__-cEynv6Blo1aGP_MzjBe3sne1vR2Xwr-vUlJs6nNhypyCE2m0LpNfkPiIoOW5-9yaULw14u5-eQjVXR7sO0Q7jtR5duBTbO26Y0l2kMorJkfpgl1tVIKeclOWsP6NNo2KkTHSksid8vjPY"/>
+</div>
+<span class="text-sm font-semibold text-slate-700 dark:text-slate-200 user-name-display">Carregando...</span>
+</div>
+<button class="material-symbols-outlined text-slate-500 hover:text-red-500 transition-colors active:scale-95 duration-200" data-icon="logout">logout</button>
+</div>
+</nav>
+<div class="flex flex-1 pt-24 pb-20 px-container-margin max-w-7xl mx-auto w-full">
+<!-- NavigationDrawer Fragmented Execution -->
+<aside class="fixed left-0 top-0 hidden lg:flex flex-col z-40 h-screen w-72 border-r bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800 shadow-xl dark:shadow-none pt-24">
+<div class="p-6">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-indigo-600">
+<img alt="User Profile" data-alt="Close-up portrait of a male professional in a high-tech corporate environment. Soft, diffused lighting accentuates his calm and focused demeanor. The background is a sleek, modern office space with subtle hints of blue and slate, mirroring the brand's sophisticated and systematic identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdlD-0XH-K-LUQ7U2ODKVsIo-F5A-9GVkB1OsL4hO7Iau9yO8xxtW_byxQhPWpHAHqJjjaZ8cDF7XXIjc-fvvLm9XSFy-iINj2m0XscKvLZxY9kzLTsWQWBl0dJAAAkceMb3FvstkcqGswI3M3dEJnlS5PiCZ-swl3d9mUk2iF4u9ggKrDW4uj-rikLQGOqYyYCQsXPRVL9EVMuW5QLv-K0vtGEWCh9zs9fG_iznP4fA1tsLf_2Gpa0utVQ2bqppn0G8ClJpuEms0"/>
+</div>
+<div>
+<p class="font-inter text-sm font-semibold text-indigo-700 dark:text-indigo-300 user-name-display">Carregando...</p>
+<p class="text-xs text-slate-500">Team Lead</p>
+</div>
+</div>
+<nav class="space-y-2">
+<a class="flex items-center gap-3 p-3 rounded-lg font-inter text-sm font-bold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-r-4 border-indigo-600 cursor-pointer transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                        Dashboard
+                    </a>
+<a class="flex items-center gap-3 p-3 rounded-lg font-inter text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+                        Agenda
+                    </a>
+<a class="flex items-center gap-3 p-3 rounded-lg font-inter text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+                        Training
+                    </a>
+<a class="flex items-center gap-3 p-3 rounded-lg font-inter text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+                        Results
+                    </a>
+<a class="flex items-center gap-3 p-3 rounded-lg font-inter text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="library_books">library_books</span>
+                        Library
+                    </a>
+</nav>
+</div>
+<div class="mt-auto p-6">
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">v2.4.0</span>
+<span class="text-[10px] text-slate-500 uppercase tracking-tighter">System Ready</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 lg:ml-72 w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
+<!-- Hero Header -->
+<header class="mb-12">
+<h1 class="font-h1 text-h1 text-white mb-2">Olá, <span class="user-name-display">Agente</span></h1>
+<p class="text-slate-400 font-body-lg">Seu terminal de comando está operacional. Selecione uma jornada para iniciar.</p>
+</header>
+<!-- Bento Grid Menu -->
+<div class="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-gutter">
+<!-- Criar Agenda (Large Featured Card) -->
+<div class="md:col-span-6 lg:col-span-8 group relative cursor-pointer glass-panel rounded-xl p-8 flex flex-col justify-between overflow-hidden transition-all duration-300 red-glow-hover" onclick="goTo('../html_usuarios/criar-agenda.html')">
+<div class="absolute top-0 right-0 p-12 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-[140px] text-red-500" data-icon="calendar_month">calendar_month</span>
+</div>
+<div class="relative z-10">
+<div class="w-14 h-14 rounded-lg bg-red-600/20 border border-red-500/30 flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-red-500 text-3xl" data-icon="event_available" data-weight="fill" style="font-variation-settings: 'FILL' 1;">event_available</span>
+</div>
+<h2 class="text-3xl font-black italic tracking-tight text-white uppercase mb-2">Criar Agenda</h2>
+<p class="text-slate-400 max-w-md">Configure novos protocolos, horários e jornadas estratégicas para a equipe em tempo real.</p>
+</div>
+<div class="mt-12 flex items-center gap-2 text-red-500 font-bold text-sm tracking-widest uppercase">
+<span>Iniciar Módulo</span>
+<span class="material-symbols-outlined text-md">arrow_forward</span>
+</div>
+</div>
+<!-- Treinamentos -->
+<div class="md:col-span-3 lg:col-span-4 group cursor-pointer glass-panel rounded-xl p-6 transition-all duration-300 red-glow-hover" onclick="goTo('../html_usuarios/treinamentos.html')">
+<div class="w-12 h-12 rounded-lg bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center mb-4 group-hover:bg-indigo-600/20 transition-colors">
+<span class="material-symbols-outlined text-indigo-400" data-icon="school">school</span>
+</div>
+<h3 class="text-xl font-bold text-white mb-1">Treinamentos</h3>
+<p class="text-sm text-slate-400 mb-4">Acesse a central de capacitação e módulos táticos.</p>
+<div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-indigo-500 h-full w-2/3"></div>
+</div>
+<p class="text-[10px] text-indigo-400 mt-2 font-bold uppercase tracking-widest">68% Concluído</p>
+</div>
+<!-- Minha Agenda -->
+<div class="md:col-span-3 lg:col-span-4 group cursor-pointer glass-panel rounded-xl p-6 transition-all duration-300 red-glow-hover" onclick="goTo('../html_usuarios/agenda.html')">
+<div class="w-12 h-12 rounded-lg bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center mb-4 group-hover:bg-emerald-600/20 transition-colors">
+<span class="material-symbols-outlined text-emerald-400" data-icon="assignment">assignment</span>
+</div>
+<h3 class="text-xl font-bold text-white mb-1">Minha Agenda</h3>
+<p class="text-sm text-slate-400">Visualize seu cronograma e compromissos ativos hoje.</p>
+<div class="mt-6 flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400">MT</div>
+<div class="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400">RJ</div>
+<div class="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-700 flex items-center justify-center text-[10px] font-bold text-white">+2</div>
+</div>
+</div>
+<!-- Resultados -->
+<div class="md:col-span-3 lg:col-span-4 group cursor-pointer glass-panel rounded-xl p-6 transition-all duration-300 red-glow-hover" onclick="goTo('../html_usuarios/resultados.html')">
+<div class="w-12 h-12 rounded-lg bg-amber-600/10 border border-amber-500/20 flex items-center justify-center mb-4 group-hover:bg-amber-600/20 transition-colors">
+<span class="material-symbols-outlined text-amber-400" data-icon="bar_chart">bar_chart</span>
+</div>
+<h3 class="text-xl font-bold text-white mb-1">Resultados</h3>
+<p class="text-sm text-slate-400">Análise métrica de performance e KPIs do departamento.</p>
+<div class="mt-4 py-2 px-3 rounded bg-slate-800/50 flex items-center justify-between">
+<span class="text-xs text-slate-500">Última Ref.</span>
+<span class="text-xs font-bold text-amber-400">14:32</span>
+</div>
+</div>
+<!-- Help/Support Mini Card -->
+<div class="md:col-span-3 lg:col-span-4 group cursor-pointer glass-panel rounded-xl p-6 transition-all duration-300 red-glow-hover" onclick="console.log('Navigate to Suporte')">
+<div class="w-12 h-12 rounded-lg bg-slate-600/10 border border-slate-500/20 flex items-center justify-center mb-4 group-hover:bg-slate-600/20 transition-colors">
+<span class="material-symbols-outlined text-slate-400" data-icon="support_agent">support_agent</span>
+</div>
+<h3 class="text-xl font-bold text-white mb-1">Suporte Tech</h3>
+<p class="text-sm text-slate-400">Comunicação direta com o núcleo de operações.</p>
+</div>
+<!-- Biblioteca de Protocolos (Full Width) -->
+<div class="md:col-span-6 lg:col-span-12 group cursor-pointer glass-panel rounded-xl p-6 flex items-center justify-between transition-all duration-300 red-glow-hover" onclick="goTo('../html_usuarios/biblioteca-treinamentos.html')">
+<div class="flex items-center gap-6">
+<div class="w-16 h-16 rounded-xl bg-gradient-to-tr from-slate-800 to-slate-700 flex items-center justify-center shadow-lg">
+<span class="material-symbols-outlined text-3xl text-white" data-icon="menu_book">menu_book</span>
+</div>
+<div>
+<h3 class="text-2xl font-bold text-white">Biblioteca de Protocolos</h3>
+<p class="text-slate-400 font-body-md">Manual completo de diretrizes, normas e procedimentos operacionais padrão.</p>
+</div>
+</div>
+<div class="w-12 h-12 rounded-full border border-slate-700 flex items-center justify-center group-hover:bg-red-600 group-hover:border-red-600 transition-all duration-300">
+<span class="material-symbols-outlined text-white" data-icon="arrow_forward">arrow_forward</span>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Technical Footer -->
+<footer class="mt-auto w-full py-4 px-container-margin border-t border-white/5 bg-slate-950/50 backdrop-blur-md flex flex-col md:flex-row items-center justify-between gap-4">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-red-600 animate-pulse-red shadow-[0_0_8px_rgba(220,38,38,0.8)]"></div>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Matriz de Conexão: Estável</span>
+</div>
+<div class="hidden sm:block h-4 w-px bg-slate-800"></div>
+<span class="text-[10px] text-slate-600 font-mono tracking-tighter">Protocolo: OBSIDIAN-USER-NODE-04</span>
+</div>
+<div class="text-[10px] text-slate-700 font-medium">
+            © 2024 TEAM LOGIC SYSTEMS. ALL PRIVILEGES RESERVED.
         </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="menu-buttons">
-
-        <button class="menu-btn" onclick="goTo('../html_usuarios/criar-agenda.html')">
-          Criar Agenda
-        </button>
- 
-        <button class="menu-btn" onclick="goTo('../html_usuarios/agenda.html')">
-          Agenda
-        </button>
- 
-        <button class="menu-btn" onclick="goTo('../html_usuarios/treinamentos.html')">
-          Treinamentos Realizados
-        </button>
- 
-        <button class="menu-btn" onclick="goTo('../html_usuarios/resultados.html')">
-          Resultados dos Treinamentos
-        </button>
- 
-        <button class="menu-btn" onclick="goTo('../html_usuarios/biblioteca-treinamentos.html')">
-          Biblioteca de Treinamentos
-        </button>
-
-      </div>
-
-      <div class="divider"></div>
-
-      <button id="btnLogout" class="btn-logout" type="button">
-        Sair
-      </button>
-
-    </section>
-  </main>
-
-  <script>
-    // =========================================================
-    // ✅ CHECK DE SESSÃO (aceita padrão novo e legado)
-    // - novo: user_session (JSON)
-    // - legado: usuarioLogado (string)
-    // =========================================================
-    const welcomeText = document.getElementById("welcomeText");
-    const btnLogout = document.getElementById("btnLogout");
-
-    function safeParse(raw){
-      try { return JSON.parse(raw); } catch { return null; }
+</footer>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full bg-slate-900/90 backdrop-blur-xl border-t border-slate-800 flex justify-around items-center py-3 px-4 z-50">
+<button class="flex flex-col items-center gap-1 text-indigo-400">
+<span class="material-symbols-outlined text-2xl" data-icon="home">home</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Início</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined text-2xl" data-icon="calendar_today">calendar_today</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Agenda</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined text-2xl" data-icon="insights">insights</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Metrics</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined text-2xl" data-icon="person">person</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Perfil</span>
+</button>
+</nav>
+<script type="module">
+    function getCurrentUser() {
+        const rawSession = localStorage.getItem("user_session");
+        if (rawSession) {
+            try {
+                const s = JSON.parse(rawSession);
+                if (s?.nome) return s.nome;
+            } catch (e) { console.error("Sessão inválida", e); }
+        }
+        return localStorage.getItem("usuarioLogado") || null;
     }
 
-    function getCurrentUser(){
-      // 1) padrão novo
-      const rawSession = localStorage.getItem("user_session");
-      if (rawSession) {
-        const s = safeParse(rawSession);
-        if (s?.nome) return { nome: s.nome };
-      }
-
-      // 2) legado
-      const u = (localStorage.getItem("usuarioLogado") || "").trim();
-      if (u) return { nome: u };
-
-      return null;
+    const userName = getCurrentUser();
+    if (!userName) {
+        window.location.href = "../index.html";
     }
 
-    const user = getCurrentUser();
-
-    if (!user) {
-      window.location.href = "../index.html";
-    } else {
-      welcomeText.textContent = `Olá, ${user.nome}`;
-    }
-
-    function goTo(page) {
-      window.location.href = page;
-    }
-
-    btnLogout.addEventListener("click", () => {
-      // limpa tudo
-      localStorage.removeItem("usuarioLogado");
-      localStorage.removeItem("user_session");
-      window.location.href = "../index.html";
+    document.querySelectorAll(".user-name-display").forEach(el => {
+        el.textContent = userName;
     });
-  </script>
 
-</body>
-</html>
+    window.goTo = (path) => {
+        window.location.href = path;
+    };
+
+    const logoutIcon = document.querySelector('button[data-icon="logout"]');
+    if (logoutIcon) {
+        logoutIcon.onclick = () => {
+            localStorage.removeItem("usuarioLogado");
+            localStorage.removeItem("user_session");
+            window.location.href = "../index.html";
+        };
+    }
+</script>
+</body></html>

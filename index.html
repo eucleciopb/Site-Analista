@@ -1,213 +1,309 @@
-<!doctype html>
-<html lang="pt-br">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Portal de Treinamentos</title>
-  <link rel="stylesheet" href="css/styles.css" />
-</head>
+<!DOCTYPE html>
 
-<body class="bg">
-
-<main class="center-wrapper">
-  <div class="login-card">
-    <div class="logo-box">GP</div>
-
-    <h2>Bem-vindo</h2>
-    <p class="hint">Selecione seu nome para acessar o sistema</p>
-
-<div class="form-group">
-  <label for="usuario">Usuário</label>
-  <select id="usuario">
-    <option value="" disabled selected>Selecione...</option>
-    <option>Alex</option>
-    <option>Daniel</option>
-    <option>Emerson</option>
-    <option>Euclecio</option>
-    <option>Felipe</option>
-    <option>Joice</option>
-    <option>Maiello</option>
-    <option>Michel</option>
-    <option>Muller</option>
-    <option>Robert</option>
-    <option>Rodrigo</option>
-    <option>Rosilene</option>
-    <option>Tenório</option>
-    <option>Victor</option>
-  </select>
-</div>
-
-    <button id="btnEntrar" class="btn-primary" type="button">Entrar</button>
-
-    <p id="msg" class="msg"></p>
-  </div>
-</main>
-
-<script type="module">
-  import { db, handleFirestoreError, OperationType, auth } from "./js/firebase.js";
-  import { signInAnonymously } from "firebase/auth";
-  import { collection, addDoc, serverTimestamp, doc, getDoc, getDocs, query, limit } from "firebase/firestore";
-
-  async function testConnection() {
-    try {
-      if (!auth.currentUser) await signInAnonymously(auth);
-      const testRef = doc(db, "cds", "connection-test");
-      await getDoc(testRef);
-      console.log("Conectado ao Firebase com sucesso.");
-    } catch (error) {
-       console.error("Erro CRÍTICO de conexão Firebase:", error);
-       handleFirestoreError(error, OperationType.GET, "conn-test");
+<html class="dark" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Portal de Treinamentos - Terminal de Acesso</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-dim": "#cbdbf5",
+            "surface-container": "#e5eeff",
+            "error": "#ba1a1a",
+            "primary-fixed": "#dae2fd",
+            "background": "#070A14",
+            "inverse-surface": "#213145",
+            "outline-variant": "#c6c6cd",
+            "on-secondary-fixed": "#07006c",
+            "tertiary-fixed": "#71f8e4",
+            "inverse-on-surface": "#eaf1ff",
+            "on-tertiary-fixed": "#00201c",
+            "on-secondary-fixed-variant": "#2f2ebe",
+            "secondary": "#4648d4",
+            "on-secondary": "#ffffff",
+            "primary-fixed-dim": "#bec6e0",
+            "tertiary-container": "#00201c",
+            "surface-container-lowest": "#ffffff",
+            "on-surface": "#f8f9ff",
+            "on-primary-container": "#7c839b",
+            "surface-container-low": "#111827",
+            "surface": "#0f172a",
+            "outline": "#76777d",
+            "on-surface-variant": "#94a3b8",
+            "on-primary": "#ffffff",
+            "on-secondary-container": "#fffbff",
+            "tertiary-fixed-dim": "#4fdbc8",
+            "secondary-fixed": "#e1e0ff",
+            "tertiary": "#000000",
+            "surface-container-high": "#1e293b",
+            "inverse-primary": "#bec6e0",
+            "secondary-fixed-dim": "#c0c1ff",
+            "surface-variant": "#1e293b",
+            "on-tertiary-container": "#009485",
+            "error-container": "#ffdad6",
+            "surface-tint": "#565e74",
+            "on-tertiary": "#ffffff",
+            "on-primary-fixed": "#131b2e",
+            "surface-bright": "#1e293b",
+            "primary-container": "#131b2e",
+            "primary": "#4f46e5",
+            "on-primary-fixed-variant": "#3f465c",
+            "on-background": "#f8f9ff",
+            "secondary-container": "#6063ee",
+            "surface-container-highest": "#334155",
+            "on-error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#005048",
+            "on-error": "#ffffff"
+          },
+          borderRadius: {
+            "DEFAULT": "0.5rem",
+            "lg": "0.75rem",
+            "xl": "1rem",
+            "full": "9999px"
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        },
+      },
     }
-  }
-  testConnection().catch(e => {
-    try {
-      const errObj = JSON.parse(e.message);
-      setMsg(`Erro de conexão: ${errObj.error} (Path: ${errObj.path}, UID: ${errObj.authInfo.userId || 'não logado'})`);
-    } catch {
-      setMsg("Erro de conexão: " + e.message);
-    }
-  });
-
-  const usuarioSelect = document.getElementById("usuario");
-  const btnEntrar = document.getElementById("btnEntrar");
-  const msg = document.getElementById("msg");
-
-  function setMsg(text, ok = false){
-    msg.textContent = text || "";
-    msg.style.color = ok ? "#22c55e" : "#ef4444";
-  }
-
-  function slug(s) {
-    return (s || "")
-      .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-  }
-
-  btnEntrar.onclick = async () => {
-    const usuario = (usuarioSelect.value || "").trim();
-
-    if (!usuario) {
-      setMsg("Selecione um usuário.");
-      return;
-    }
-
-    btnEntrar.disabled = true;
-    btnEntrar.style.opacity = ".7";
-    setMsg("Entrando...", true);
-
-    try {
-      // ✅ Autenticação anônima opcional para garantir que as Firestore Rules funcionem se habilitado
-      try {
-        if (!auth.currentUser) {
-          await signInAnonymously(auth);
-        }
-      } catch (authError) {
-        console.warn("Aviso: Autenticação anônima falhou ou está desativada no console.", authError);
-      }
-
-      // Sessão padrão usada pela agenda
-      localStorage.setItem("user_session", JSON.stringify({
-        nome: usuario,
-        matricula: usuario,
-        perfil: "analista",
-        uid: auth.currentUser ? auth.currentUser.uid : null,
-        loginAt: Date.now()
-      }));
-
-      // Compatibilidade legada
-      localStorage.setItem("usuarioLogado", usuario);
-      localStorage.setItem("usuarioKey", slug(usuario));
-
-      // Log de acesso
-      const path = "acessos";
-      try {
-        await addDoc(collection(db, path), {
-          usuario,
-          origem: "index.html",
-          evento: "LOGIN_SEM_AUTH",
-          criadoEm: serverTimestamp(),
-          userAgent: navigator.userAgent || null
-        });
-      } catch (e) {
-        handleFirestoreError(e, OperationType.CREATE, path);
-      }
-
-      // ✅ CAMINHO CORRETO DO MENU
-      window.location.href = "html_menus/menu.html";
-
-    } catch (e) {
-      console.error(e);
-      setMsg("Erro ao entrar. " + (e.message.startsWith('{') ? "Erro de permissão" : "Verifique o Firebase."));
-      btnEntrar.disabled = false;
-      btnEntrar.style.opacity = "1";
-    }
-  };
-</script>
-
+  </script>
 <style>
-.center-wrapper{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-.login-card{
-  width:360px;
-  padding:30px;
-  border-radius:20px;
-  background:rgba(23,25,29,.85);
-  border:1px solid rgba(255,255,255,.08);
-  box-shadow:0 20px 40px rgba(0,0,0,.4);
-  text-align:center;
-}
-.logo-box{
-  width:70px;
-  height:70px;
-  margin:0 auto 20px auto;
-  border-radius:18px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:900;
-  font-size:22px;
-  color:#fff;
-  background:linear-gradient(135deg,#d91b2e,#ff3b3b);
-}
-.form-group{
-  margin-top:20px;
-  text-align:left;
-}
-.form-group select{
-  width:100%;
-  padding:12px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.05);
-  color:#fff;
-  margin-top:6px;
-}
-.btn-primary{
-  width:100%;
-  margin-top:20px;
-  padding:12px;
-  border:none;
-  border-radius:14px;
-  font-weight:800;
-  background:linear-gradient(135deg,#d91b2e,#ff3b3b);
-  color:#fff;
-  cursor:pointer;
-}
-.msg{
-  margin-top:12px;
-  font-size:12px;
-}
-.hint{
-  font-size:13px;
-  opacity:.7;
-}
-</style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #070A14;
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .bg-mesh {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: radial-gradient(circle at 0% 0%, rgba(79, 70, 229, 0.1) 0%, transparent 40%),
+                  radial-gradient(circle at 100% 100%, rgba(96, 99, 238, 0.05) 0%, transparent 40%),
+                  radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 1) 0%, rgba(7, 10, 20, 1) 100%);
+    }
+    .terminal-scan {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(79, 70, 229, 0.5), transparent);
+      animation: scan 3s linear infinite;
+    }
+    @keyframes scan {
+      0% { top: 0%; opacity: 0; }
+      5% { opacity: 1; }
+      95% { opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+    .btn-primary-gradient {
+      background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-primary-gradient:hover:not(:disabled) {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
+    }
+    .btn-primary-gradient:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .input-cyber {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      transition: all 0.2s ease;
+    }
+    .input-cyber:focus {
+      border-color: #4f46e5;
+      ring-color: #4f46e5;
+      background: rgba(0, 0, 0, 0.3);
+    }
+  </style>
+</head>
+<body class="text-on-surface antialiased overflow-hidden">
+<div class="bg-mesh"></div>
+<main class="flex min-h-screen items-center justify-center p-6 relative">
+<!-- Efeitos de iluminação ambiente -->
+<div class="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/10 blur-[100px] rounded-full"></div>
+<div class="absolute bottom-1/4 right-1/4 w-64 h-64 bg-secondary/10 blur-[100px] rounded-full"></div>
+<div class="glass-card w-full max-w-md rounded-2xl p-8 md:p-10 relative overflow-hidden flex flex-col items-center">
+<!-- Scan Line -->
+<div class="terminal-scan"></div>
+<!-- Logo Modernizado -->
+<div class="mb-8 relative group">
+<div class="absolute -inset-4 bg-primary/20 blur-xl rounded-full group-hover:bg-primary/30 transition-all duration-500"></div>
+<div class="relative h-20 w-20 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center shadow-2xl border border-white/10 ring-1 ring-white/5">
+<span class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-br from-indigo-400 to-blue-500 tracking-tighter">GP</span>
+</div>
+</div>
+<!-- Cabeçalho do Terminal -->
+<div class="mb-10 text-center w-full">
+<h1 class="text-2xl font-bold tracking-tight text-white mb-1">Terminal de Acesso</h1>
+<div class="flex items-center justify-center gap-3">
+<span class="h-[1px] w-6 bg-white/10"></span>
+<p class="text-[10px] font-semibold text-primary uppercase tracking-[0.2em]">Operação de Campo</p>
+<span class="h-[1px] w-6 bg-white/10"></span>
+</div>
+</div>
+<!-- Formulário de Autenticação -->
+<div class="w-full space-y-6">
+<div class="space-y-2">
+<label class="block ml-1 text-[11px] font-medium uppercase tracking-wider text-on-surface-variant" for="usuario">Autenticação do Agente</label>
+<div class="relative">
+<select class="input-cyber w-full h-12 px-4 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none appearance-none cursor-pointer" id="usuario">
+<option disabled="" selected="" value="">Selecione o Agente...</option>
+<option value="Alex">Alex</option>
+<option value="Daniel">Daniel</option>
+<option value="Emerson">Emerson</option>
+<option value="Euclecio">Euclecio</option>
+<option value="Felipe">Felipe</option>
+<option value="Joice">Joice</option>
+<option value="Maiello">Maiello</option>
+<option value="Michel">Michel</option>
+<option value="Muller">Muller</option>
+<option value="Robert">Robert</option>
+<option value="Rodrigo">Rodrigo</option>
+<option value="Rosilene">Rosilene</option>
+<option value="Tenório">Tenório</option>
+<option value="Victor">Victor</option>
+</select>
+<div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
+<span class="material-symbols-outlined text-lg">expand_more</span>
+</div>
+</div>
+</div>
+<button class="btn-primary-gradient w-full h-12 rounded-lg text-sm font-bold tracking-wide text-white uppercase flex items-center justify-center gap-2" id="btnEntrar">
+<span>Iniciar Operação</span>
+<span class="material-symbols-outlined text-base">login</span>
+</button>
+</div>
+<!-- Mensagens do Sistema -->
+<div class="mt-6 min-h-[20px] text-[11px] font-medium tracking-wide flex items-center justify-center gap-2" id="msg"></div>
+<!-- Rodapé Técnico -->
+<div class="mt-10 pt-6 border-t border-white/5 w-full flex items-center justify-between">
+<div class="flex flex-col gap-0.5">
+<p class="text-[9px] text-white/30 uppercase tracking-widest font-mono">Node: GP-ALPHA-PORTAL</p>
+<p class="text-[8px] text-white/10 uppercase font-mono">Status: Secure Layer Active</p>
+</div>
+<div class="flex gap-2">
+<div class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
+</div>
+</div>
+</div>
+</main>
+<script type="module">
+    import { db, handleFirestoreError, OperationType, auth } from "./js/firebase.js";
+    import { signInAnonymously } from "firebase/auth";
+    import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 
-</body>
-</html>
+    async function testConnection() {
+      try {
+        if (!auth.currentUser) await signInAnonymously(auth);
+        const testRef = doc(db, "cds", "connection-test");
+        await getDoc(testRef);
+        console.log("Conectado ao Firebase com sucesso.");
+      } catch (error) {
+         console.error("Erro CRÍTICO de conexão Firebase:", error);
+         handleFirestoreError(error, OperationType.GET, "conn-test");
+      }
+    }
+    
+    testConnection().catch(e => {
+      try {
+        const errObj = JSON.parse(e.message);
+        setMsg(`Erro de conexão: ${errObj.error}`, false);
+      } catch {
+        setMsg("Erro de conexão: " + e.message, false);
+      }
+    });
+
+    const usuarioSelect = document.getElementById("usuario");
+    const btnEntrar = document.getElementById("btnEntrar");
+    const msg = document.getElementById("msg");
+
+    function setMsg(text, ok = false){
+      msg.textContent = text || "";
+      msg.className = `mt-6 min-h-[20px] text-[11px] font-medium tracking-wide flex items-center justify-center gap-2 ${ok ? 'text-emerald-400' : 'text-rose-500'}`;
+    }
+
+    function slug(s) {
+      return (s || "")
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+    }
+
+    btnEntrar.onclick = async () => {
+      const usuario = (usuarioSelect.value || "").trim();
+
+      if (!usuario) {
+        setMsg("Selecione um usuário para continuar.");
+        return;
+      }
+
+      btnEntrar.disabled = true;
+      btnEntrar.style.opacity = ".7";
+      setMsg("Iniciando sessão segura...", true);
+
+      try {
+        try {
+          if (!auth.currentUser) {
+            await signInAnonymously(auth);
+          }
+        } catch (authError) {
+          console.warn("Aviso: Autenticação anônima falhou.", authError);
+        }
+
+        localStorage.setItem("user_session", JSON.stringify({
+          nome: usuario,
+          matricula: usuario,
+          perfil: "analista",
+          uid: auth.currentUser ? auth.currentUser.uid : null,
+          loginAt: Date.now()
+        }));
+
+        localStorage.setItem("usuarioLogado", usuario);
+        localStorage.setItem("usuarioKey", slug(usuario));
+
+        const path = "acessos";
+        try {
+          await addDoc(collection(db, path), {
+            usuario,
+            origem: "index.html",
+            evento: "LOGIN_SEM_AUTH",
+            criadoEm: serverTimestamp(),
+            userAgent: navigator.userAgent || null
+          });
+        } catch (e) {
+          handleFirestoreError(e, OperationType.CREATE, path);
+        }
+
+        window.location.href = "html_menus/menu.html";
+
+      } catch (e) {
+        console.error(e);
+        setMsg("Falha na autenticação. Verifique sua rede.", false);
+        btnEntrar.disabled = false;
+        btnEntrar.style.opacity = "1";
+      }
+    };
+  </script>
+</body></html>

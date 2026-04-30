@@ -88,52 +88,67 @@ tbody tr:hover{
 </style>
 </head>
 
-<body class="bg">
+<body class="bg-tech">
+<div class="bg-grid"></div>
 
-<header class="topbar">
-  <div class="topbar-inner">
-    <div>
-      <h2>Agenda Mensal — Admin</h2>
-      <div id="userInfo" class="hint" style="margin-top:4px;"></div>
+<header class="topbar animate-fade">
+  <div class="flex items-center justify-between max-w-7xl mx-auto px-6 w-full">
+    <div class="flex items-center gap-4">
+      <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-[#1e40af] to-[#3b82f6] flex items-center justify-center shadow-lg shadow-[#3b82f6]/20">
+        <span class="text-lg font-black italic">ADM</span>
+      </div>
+      <div>
+        <h2 class="text-xl font-black italic uppercase tracking-tight">Matriz Estratégica</h2>
+        <div id="userInfo" class="text-[10px] font-bold uppercase tracking-widest text-[#3b82f6]/60 mt-0.5 italic">ADMIN: —</div>
+      </div>
     </div>
-    <div>
-      <button id="btnMenu" class="btn-secondary">Voltar ao Menu</button>
-      <button id="btnLogout" class="btn-secondary">Sair</button>
+
+    <div class="flex gap-3">
+      <button id="btnMenu" class="bg-white/5 hover:bg-white/10 text-white/70 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-white/5">Voltar</button>
+      <button id="btnLogout" class="bg-white/5 hover:bg-white/10 text-white/70 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-white/5">Sair</button>
     </div>
   </div>
 </header>
 
-<main class="card wide">
+<main class="max-w-7xl mx-auto p-6 space-y-6">
+  
+  <section class="glass-card p-8 animate-fade [animation-delay:0.1s]">
+    <div class="flex items-center justify-between mb-8 pb-4 border-b border-white/5 flex-wrap gap-4">
+      <div>
+        <h3 class="text-lg font-black italic uppercase">Consola de Planejamento</h3>
+        <p class="text-[10px] text-white/30 uppercase tracking-widest mt-1 italic">Visão mensal consolidada de operações regionais</p>
+      </div>
+      <div class="flex gap-4">
+        <div class="w-48">
+          <label class="block text-[9px] font-black uppercase tracking-widest text-white/20 mb-1">Mês de Referência</label>
+          <input id="monthPicker" type="month" class="input-cyber w-full text-xs" />
+        </div>
+        <div class="w-64">
+          <label class="block text-[9px] font-black uppercase tracking-widest text-white/20 mb-1">Filtro de Busca</label>
+          <input id="busca" type="text" class="input-cyber w-full text-xs" placeholder="Analista ou CD..." />
+        </div>
+      </div>
+    </div>
 
-<section class="filters">
-  <div>
-    <label>Mês</label>
-    <input id="monthPicker" class="field" type="month">
-  </div>
-  <div>
-    <label>Buscar</label>
-    <input id="busca" class="field" type="text" placeholder="Analista ou CD">
-  </div>
-</section>
-
-<div class="table-wrap">
-<table>
-<thead>
-<tr>
-<th>Data</th>
-<th>Dia</th>
-<th>Analista</th>
-<th>CD</th>
-<th>Atividade</th>
-<th>Obs</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody id="tbody">
-<tr><td colspan="7">Carregando…</td></tr>
-</tbody>
-</table>
-</div>
+    <div class="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+      <table class="w-full text-left border-collapse min-w-[1200px]">
+        <thead class="bg-white/5 text-[10px] font-black uppercase tracking-widest text-white/40">
+          <tr>
+            <th class="p-5 border-b border-white/5 w-[120px]">DATA</th>
+            <th class="p-5 border-b border-white/5 w-[80px]">DIA</th>
+            <th class="p-5 border-b border-white/5 w-[160px]">OPERADOR</th>
+            <th class="p-5 border-b border-white/5 w-[260px]">UNIDADE (CD)</th>
+            <th class="p-5 border-b border-white/5">PROTOCOLO / ATIVIDADE</th>
+            <th class="p-5 border-b border-white/5 w-[200px]">OBSERVAÇÕES</th>
+            <th class="p-5 border-b border-white/5 w-[140px]">SITUAÇÃO</th>
+          </tr>
+        </thead>
+        <tbody id="tbody" class="text-xs font-medium text-white/80">
+          <tr><td colspan="7" class="p-20 text-center text-white/20 uppercase tracking-[0.2em] italic">Rastreando Histórico Estratégico...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
 
 </main>
 
@@ -209,27 +224,30 @@ function render(){
   });
 
   tbody.innerHTML = "";
-
   if(rows.length===0){
-    tbody.innerHTML = `<tr><td colspan="7">Sem registros</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="p-20 text-center text-white/20 uppercase tracking-[0.2em] italic">Nenhum registro estratégico localizado</td></tr>`;
     return;
   }
 
   rows.forEach(x=>{
-    const status = isFilled(x)
-      ? `<span class="pill ok">Preenchido</span>`
-      : `<span class="pill pend">Não preenchido</span>`;
+    const isOk = isFilled(x);
+    const statusText = isOk ? "PREENCHIDO" : "PENDENTE";
+    const statusClass = isOk 
+      ? "px-2 py-1 rounded-lg bg-green-500/10 text-green-500 font-black uppercase text-[10px] tracking-widest border border-green-500/20 italic" 
+      : "px-2 py-1 rounded-lg bg-yellow-500/10 text-yellow-500 font-black uppercase text-[10px] tracking-widest border border-yellow-500/20";
 
-    tbody.innerHTML += `
-    <tr>
-      <td>${toBR(x.data)}</td>
-      <td>${diaSemana(x.data)}</td>
-      <td>${x.usuarioNome || "-"}</td>
-      <td>${x.cd || "-"}</td>
-      <td>${x.atividade || "-"}</td>
-      <td>${x.obs || "-"}</td>
-      <td>${status}</td>
-    </tr>`;
+    const tr = document.createElement("tr");
+    tr.className = "hover:bg-white/[0.02] transition-colors border-b border-white/5 group";
+    tr.innerHTML = `
+      <td class="p-5 font-mono text-[10px] text-white/40 italic">${toBR(x.data)}</td>
+      <td class="p-5 text-white/30 uppercase tracking-tighter">${diaSemana(x.data)}</td>
+      <td class="p-5 font-bold italic tracking-tight text-white/90">${x.usuarioNome || "-"}</td>
+      <td class="p-5"><span class="px-2 py-1 rounded bg-white/5 text-white/70 font-black uppercase text-[10px] tracking-tighter">${x.cd || "-"}</span></td>
+      <td class="p-5 text-white/80 font-medium italic">${x.atividade || "-"}</td>
+      <td class="p-5 text-[10px] text-white/30 truncate max-w-[200px]">${x.obs || "-"}</td>
+      <td class="p-5"><span class="${statusClass}">${statusText}</span></td>
+    `;
+    tbody.appendChild(tr);
   });
 }
 
