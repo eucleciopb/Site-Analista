@@ -418,15 +418,18 @@ async function loadMonthFromFirestore(yyyyMM) {
     const coll = collection(db, AGENDA_COLLECTION);
     const queries = [];
     
-    // 1. Busca por Mês + Nome do Usuário (em variações)
-    const nameVars = [usuarioNome, usuarioNome.toLowerCase(), usuarioNome.toUpperCase()];
-    const uniqueNames = [...new Set(nameVars)];
+    // 1. Busca por Mês + Usuário (com variações de nome)
+    const nameVars = [usuarioNome];
+    if (usuarioNome.toUpperCase() === "EUCLECIO") nameVars.push("Alex"); 
+    
+    const uniqueNames = [...new Set(nameVars.flatMap(n => [n, n.toLowerCase(), n.toUpperCase()]))];
+    
     uniqueNames.forEach(n => {
        queries.push(query(coll, where("yyyyMM", "==", yyyyMM), where("usuarioNome", "==", n)));
-       queries.push(query(coll, where("yyyyMM", "==", yyyyMM), where("uidKey", "==", n.toLowerCase())));
+       queries.push(query(coll, where("uidKey", "==", n.toLowerCase()), where("yyyyMM", "==", yyyyMM)));
     });
 
-    // 2. Busca GERAL pelo mês (emergência se o nome não bater)
+    // 2. Busca Global pelo Mês
     queries.push(query(coll, where("yyyyMM", "==", yyyyMM)));
 
     // 3. Busca pelo uidKey se existir
@@ -436,6 +439,7 @@ async function loadMonthFromFirestore(yyyyMM) {
     let totalDocsRaw = 0;
     const processedIds = new Set();
     const otherMonths = new Set();
+    let foundAnalyst = null;
 
     results.forEach((res, idx) => {
       if (res.status === "fulfilled") {
@@ -450,7 +454,8 @@ async function loadMonthFromFirestore(yyyyMM) {
                            (data.date && typeof data.date === 'string' && data.date.substring(0, 7));
           
           if (itemMonth === yyyyMM) {
-            console.log(`[LOAD] Doc compatível ${d.id}:`, data);
+            if (!foundAnalyst) foundAnalyst = data.usuarioNome || data.analyst || data.uidKey || "Desconhecido";
+            console.log(`[LOAD] Sucesso: Carregando doc ${d.id} (${foundAnalyst})`);
             
             if (data.dias && typeof data.dias === "object") {
               Object.entries(data.dias).forEach(([dt, val]) => {
@@ -468,10 +473,12 @@ async function loadMonthFromFirestore(yyyyMM) {
             otherMonths.add(itemMonth);
           }
         });
+      } else {
+        console.error(`[LOAD] Query ${idx} falhou:`, res.reason);
       }
     });
 
-    console.log(`[LOAD] Documentos analisados: ${totalDocsRaw} | Itens no mês ${yyyyMM}: ${Object.keys(map).length}`);
+    console.log(`[LOAD] Resumo: Analisados=${totalDocsRaw}, Mapeados=${Object.keys(map).length}, Analista=${foundAnalyst}`);
 
     // 4. Preencher a tabela
     const rows = [...tbody.querySelectorAll("tr[data-date]")];
@@ -502,15 +509,15 @@ async function loadMonthFromFirestore(yyyyMM) {
     }
     
     if (loadedCount > 0) {
-      setStatus(`${loadedCount} dias carregados`);
-      setMsg(`Agenda de ${yyyyMM} sincronizada.`, "success");
+      setStatus(`Carregado: ${foundAnalyst}`);
+      setMsg(`Agenda de ${foundAnalyst} carregada com sucesso (${yyyyMM}).`, "success");
     } else {
-      setStatus("Nenhum dado encontrado");
+      setStatus("Nenhum dado");
       if (otherMonths.size > 0) {
         const sorted = [...otherMonths].sort();
         setMsg(`Dados encontrados em outros meses: ${sorted.join(", ")}.`, "info");
       } else {
-        setMsg(`Nenhum dado salvo para ${yyyyMM}.`, "info");
+        setMsg(`Nenhum dado encontrado para ${yyyyMM}.`, "info");
       }
     }
   } catch (err) {
