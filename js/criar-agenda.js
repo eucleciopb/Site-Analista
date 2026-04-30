@@ -404,31 +404,54 @@ async function loadCDsToDatalist() {
 async function loadMonthFromFirestore(yyyyMM) {
   if (!yyyyMM) return;
   setStatus("Sincronizando do Firebase...");
+  console.log(`[LOAD] Iniciando carga - Mês: ${yyyyMM}, Usuário: ${usuarioNome}, Key: ${usuarioKey}`);
   
   try {
     const coll = collection(db, AGENDA_COLLECTION);
+    
+    // Consultas mais amplas para garantir que pegamos os dados mesmo se campos faltarem
     const queries = [
-      query(coll, where("uidKey", "==", usuarioKey), where("yyyyMM", "==", yyyyMM)),
-      query(coll, where("analyst", "==", usuarioNome), where("yyyyMM", "==", yyyyMM)),
-      query(coll, where("usuarioNome", "==", usuarioNome), where("yyyyMM", "==", yyyyMM))
+      query(coll, where("uidKey", "==", usuarioKey)),
+      query(coll, where("usuarioNome", "==", usuarioNome)),
+      query(coll, where("analyst", "==", usuarioNome))
     ];
 
     const results = await Promise.allSettled(queries.map(q => getDocs(q)));
     const map = {};
-    results.forEach((res) => {
+    let totalDocsRaw = 0;
+
+    results.forEach((res, idx) => {
       if (res.status === "fulfilled") {
+        totalDocsRaw += res.value.size;
         res.value.forEach(d => {
           const data = d.data();
-          if (data.dias && typeof data.dias === "object") {
-            Object.entries(data.dias).forEach(([dt, val]) => {
-              map[dt] = { ...val, data: dt };
-            });
-          } else if (data.data) {
-            map[data.data] = data;
+          
+          // Filtro por mês em memória para maior flexibilidade
+          const itemMonth = data.yyyyMM || data.monthKey || (data.data && data.data.substring(0, 7)) || (data.date && data.date.substring(0, 7));
+          
+          if (itemMonth === yyyyMM) {
+            console.log(`[LOAD] Item compatível encontrado no doc ${d.id}`);
+            
+            // Suporte a formato de documento único por mês (dias: { date: { ... } })
+            if (data.dias && typeof data.dias === "object") {
+              Object.entries(data.dias).forEach(([dt, val]) => {
+                map[dt] = { ...val, data: dt };
+              });
+            } 
+            // Suporte a formato de um documento por dia (data: 'YYYY-MM-DD')
+            else {
+              const dt = data.data || data.date || d.id.split("_")[1] || d.id;
+              if (dt && dt.length >= 10) {
+                map[dt.substring(0, 10)] = data;
+              }
+            }
           }
         });
       }
     });
+
+    console.log(`[LOAD] Total de documentos brutos processados: ${totalDocsRaw}`);
+    console.log(`[LOAD] Itens mapeados para o mês ${yyyyMM}: ${Object.keys(map).length}`);
 
     const rows = [...tbody.querySelectorAll("tr[data-date]")];
     let loadedCount = 0;
@@ -443,17 +466,25 @@ async function loadMonthFromFirestore(yyyyMM) {
       const actSel = tr.querySelector("[data-field='atividade']");
       const obsTxt = tr.querySelector("[data-field='obs']");
 
-      if (cdInp) cdInp.value = saved.cd || "";
-      if (actSel) actSel.value = saved.atividade || "";
-      if (obsTxt) obsTxt.value = saved.obs || "";
+      if (cdInp) cdInp.value = saved.cd || saved.CD || "";
+      if (actSel) actSel.value = saved.atividade || saved.Atividade || "";
+      if (obsTxt) obsTxt.value = saved.obs || saved.Obs || saved.observacoes || saved.observacao || saved.Observação || "";
       
       updateValidationUI(cdInp);
       loadedCount++;
     }
-    setStatus(loadedCount > 0 ? `${loadedCount} dias carregados` : "Nenhum dado salvo");
+    
+    if (loadedCount > 0) {
+      setStatus(`${loadedCount} dias carregados`);
+      setMsg("Agenda sincronizada com sucesso.", "success");
+      console.log(`[LOAD] Sucesso: ${loadedCount} linhas preenchidas na tabela.`);
+    } else {
+      setStatus("Nenhum dado salvo");
+      console.warn(`[LOAD] Nenhum dado compatível com a tabela do mês ${yyyyMM} foi encontrado.`);
+    }
   } catch (err) {
-    console.error("Erro no loadMonthFromFirestore:", err);
-    throw err;
+    console.error("[LOAD] Erro crítico:", err);
+    setStatus("Erro ao carregar");
   }
 }
 
