@@ -439,15 +439,24 @@ async function loadMonthFromFirestore(yyyyMM) {
       queries.push(query(coll, where("uidKey", "==", usuarioKey)));
       queries.push(query(coll, where("usuarioKey", "==", usuarioKey)));
     }
-    queries.push(query(coll, where("usuarioNome", "==", usuarioNome)));
-    queries.push(query(coll, where("analyst", "==", usuarioNome)));
-    queries.push(query(coll, where("analista", "==", usuarioNome)));
-    queries.push(query(coll, where("nome", "==", usuarioNome)));
+    
+    // Variações de caso para o nome
+    const nameVars = [usuarioNome, usuarioNome.toLowerCase(), usuarioNome.toUpperCase(), 
+                     usuarioNome.charAt(0).toUpperCase() + usuarioNome.slice(1).toLowerCase()];
+    const uniqueNames = [...new Set(nameVars)];
+    
+    uniqueNames.forEach(n => {
+      queries.push(query(coll, where("usuarioNome", "==", n)));
+      queries.push(query(coll, where("analyst", "==", n)));
+      queries.push(query(coll, where("analista", "==", n)));
+      queries.push(query(coll, where("nome", "==", n)));
+    });
 
     // 3. Execução paralela das consultas
     const results = await Promise.allSettled(queries.map(q => getDocs(q)));
     let totalDocsRaw = 0;
     const processedIds = new Set();
+    const otherMonths = new Set();
 
     results.forEach((res, idx) => {
       if (res.status === "fulfilled") {
@@ -481,12 +490,14 @@ async function loadMonthFromFirestore(yyyyMM) {
                 map[key] = data;
               }
             }
+          } else if (itemMonth) {
+            otherMonths.add(itemMonth);
           }
         });
       }
     });
 
-    console.log(`[LOAD] Documentos analisados: ${totalDocsRaw} | Itens únicos no mês ${yyyyMM}: ${Object.keys(map).length}`);
+    console.log(`[LOAD] Documentos analisados: ${totalDocsRaw} | Itens no mês ${yyyyMM}: ${Object.keys(map).length}`);
 
     // 4. Preencher a tabela
     const rows = [...tbody.querySelectorAll("tr[data-date]")];
@@ -518,16 +529,12 @@ async function loadMonthFromFirestore(yyyyMM) {
       setMsg("Agenda sincronizada com sucesso.", "success");
     } else {
       setStatus("Nenhum dado encontrado");
-      if (totalDocsRaw === 0) {
-        console.log("%c[LOAD] Tentando busca de emergência (sample) para entender o banco...", "color: orange");
-        try {
-           const sample = await getDocs(query(coll, limit(5)));
-           if (sample.empty) console.log("[LOAD] A coleção 'agenda_dias' parece estar vazia.");
-           else {
-             console.log("[LOAD] Amostra de documentos no banco (ID - Campos):");
-             sample.forEach(s => console.log(` - ${s.id}:`, Object.keys(s.data())));
-           }
-        } catch(e) {}
+      if (otherMonths.size > 0) {
+        const monthsList = [...otherMonths].sort().join(", ");
+        setMsg(`Dados encontrados para outros meses: ${monthsList}. Troque o mês para visualizar.`, "info");
+        console.log(`[LOAD] Meses com dados encontrados: ${monthsList}`);
+      } else if (totalDocsRaw === 0) {
+        setMsg("Nenhum dado encontrado no banco para este usuário.", "info");
       }
     }
   } catch (err) {
