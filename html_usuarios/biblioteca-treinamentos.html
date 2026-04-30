@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Biblioteca de Treinamentos</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+
+<body class="bg">
+  <header class="topbar">
+    <div>
+      <h2>Biblioteca de Treinamentos</h2>
+      <div id="userInfo" class="hint" style="color:#d1d5db;margin-top:4px;"></div>
+    </div>
+
+    <div class="top-actions">
+      <button id="btnMenu" class="btn-secondary" type="button">Voltar ao Menu</button>
+      <button id="btnLogout" class="btn-secondary" type="button">Sair</button>
+    </div>
+  </header>
+
+  <main class="card wide">
+    <section class="row-between" style="align-items:flex-end;">
+      <div>
+        <h3>Treinamentos cadastrados (Global)</h3>
+        <p class="hint">Aqui aparece a lista única salva no Firestore.</p>
+      </div>
+
+      <div style="min-width:280px;">
+        <label for="busca">Buscar</label>
+        <input id="busca" type="text" placeholder="Nome do treinamento..." />
+      </div>
+    </section>
+
+    <p id="msg" class="msg"></p>
+
+    <div class="table-wrap" style="margin-top:12px;">
+      <table class="table table-sticky">
+        <thead>
+          <tr>
+            <th style="width:70px;">#</th>
+            <th>Nome</th>
+            <th style="width:160px;">Treinamento</th>
+            <th style="width:140px;">Forms</th>
+            <th style="width:160px;">Cadastrado por</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="5" style="opacity:.8;">Carregando…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script type="module">
+    import { db } from "../js/firebase.js";
+    import {
+      collection,
+      getDocs
+    } from "firebase/firestore";
+
+    const COL = "biblioteca_treinamentos";
+
+    const PATH_INDEX = "../index.html";
+    const PATH_MENU  = "../html_menus/menu.html"; // menu do usuário normal (ajuste se precisar)
+
+    function safeParse(raw){ try { return JSON.parse(raw); } catch { return null; } }
+    function getCurrentUserName(){
+      const raw = localStorage.getItem("user_session");
+      if(raw){
+        const s = safeParse(raw);
+        if(s?.nome) return String(s.nome).trim();
+      }
+      return (localStorage.getItem("usuarioLogado") || "").trim();
+    }
+    const usuario = getCurrentUserName();
+    if (!usuario) window.location.href = PATH_INDEX;
+
+    document.getElementById("userInfo").textContent = `Usuário: ${usuario}`;
+    document.getElementById("btnMenu").onclick = () => window.location.href = PATH_MENU;
+    document.getElementById("btnLogout").onclick = () => {
+      localStorage.removeItem("user_session");
+      localStorage.removeItem("usuarioLogado");
+      window.location.href = PATH_INDEX;
+    };
+
+    const tbody = document.getElementById("tbody");
+    const busca = document.getElementById("busca");
+    const msg = document.getElementById("msg");
+
+    function setMsg(text, type="info"){
+      msg.textContent = text || "";
+      msg.style.color = type === "success" ? "#22c55e" : (type === "error" ? "#ef4444" : "#d1d5db");
+    }
+
+    let CACHE = [];
+
+    async function loadAll(){
+      const snap = await getDocs(collection(db, COL));
+      const arr = [];
+      snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+      arr.sort((a,b)=> String(a.nome||"").localeCompare(String(b.nome||""),"pt-BR"));
+      CACHE = arr;
+      return arr;
+    }
+
+    function render(){
+      const q = (busca.value || "").toLowerCase();
+      const data = (CACHE || []);
+      const filtered = q ? data.filter(x => String(x.nome||"").toLowerCase().includes(q)) : data;
+
+      tbody.innerHTML = "";
+      if (filtered.length === 0){
+        tbody.innerHTML = `<tr><td colspan="5" style="opacity:.8;">Nenhum treinamento encontrado.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach((t, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${i+1}</td>
+          <td>${t.nome || "-"}</td>
+          <td>${t.linkTreino ? `<a href="${t.linkTreino}" target="_blank" rel="noopener">Abrir</a>` : "-"}</td>
+          <td>${t.linkForms ? `<a href="${t.linkForms}" target="_blank" rel="noopener">Abrir</a>` : "-"}</td>
+          <td style="opacity:.9;">${t.createdBy || "-"}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    setMsg("Carregando…");
+    try{
+      await loadAll();
+      setMsg("");
+      render();
+    }catch(e){
+      console.error(e);
+      setMsg("Erro ao carregar do Firebase. Verifique Rules/Conexão.", "error");
+      tbody.innerHTML = `<tr><td colspan="5" style="opacity:.8;">Falha ao carregar.</td></tr>`;
+    }
+
+    busca.addEventListener("input", render);
+  </script>
+</body>
+</html>

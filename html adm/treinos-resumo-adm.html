@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Resumo de Treinamentos | Admin</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+
+  <style>
+    .topbar{
+      position:sticky; top:0; z-index:999;
+      backdrop-filter: blur(10px);
+      background: rgba(11,15,20,.82);
+      border-bottom:1px solid rgba(255,255,255,.08);
+      padding:12px 0;
+    }
+    .topbar-inner{
+      display:flex; justify-content:space-between;
+      align-items:flex-start; gap:14px; flex-wrap:wrap;
+    }
+    .topbar h2{ margin:0; font-size:18px; }
+
+    .filters{
+      display:flex; gap:12px; flex-wrap:wrap;
+      margin-top:14px;
+      align-items:flex-end;
+    }
+    .filters > div{ min-width:220px; flex:1; }
+
+    .field{
+      width:100%; padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.05);
+      color:#fff;
+      outline:none;
+    }
+    .field:focus{
+      border-color: rgba(255,59,59,.55);
+      box-shadow: 0 0 0 4px rgba(217,27,46,.18);
+    }
+
+    .kpis{
+      display:flex; gap:12px; flex-wrap:wrap;
+      margin-top:14px;
+    }
+    .kpi{
+      flex:1; min-width:220px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      padding:12px 14px;
+    }
+    .kpi .label{ font-size:12px; opacity:.8; }
+    .kpi .value{ font-size:18px; font-weight:900; margin-top:6px; }
+
+    .table-wrap{
+      overflow:auto;
+      margin-top:16px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:1400px;
+    }
+    thead th{
+      position:sticky; top:0;
+      background:rgba(0,0,0,.38);
+      backdrop-filter: blur(8px);
+      padding:12px;
+      font-size:12px;
+      text-align:left;
+      color:#bbb;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      white-space:nowrap;
+    }
+    tbody td{
+      padding:11px 12px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      vertical-align:top;
+    }
+    tbody tr:hover{
+      background:rgba(255,255,255,.05);
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      white-space:nowrap;
+    }
+
+    .muted{ opacity:.85; }
+
+    .top-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .btn-primary{
+      padding:10px 14px;
+      border:none;
+      border-radius:12px;
+      background:#d91b2e;
+      color:#fff;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .btn-primary:hover{
+      filter:brightness(1.08);
+    }
+
+    #monthPicker{
+      color-scheme: dark;
+      color:#fff;
+    }
+    #monthPicker::-webkit-calendar-picker-indicator{
+      filter: invert(1) brightness(2);
+      cursor:pointer;
+      opacity:1;
+    }
+  </style>
+</head>
+
+<body class="bg">
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <h2>Resumo de Treinamentos — Admin</h2>
+      <div id="userInfo" class="hint" style="color:#d1d5db;margin-top:4px;"></div>
+    </div>
+
+    <div class="top-actions">
+      <button id="btnExport" class="btn-primary" type="button">Exportar Excel</button>
+      <button id="btnMenu" class="btn-secondary" type="button">Voltar ao Menu</button>
+      <button id="btnLogout" class="btn-secondary" type="button">Sair</button>
+    </div>
+  </div>
+</header>
+
+<main class="card wide">
+
+  <section class="filters">
+    <div>
+      <label for="monthPicker">Mês</label>
+      <input id="monthPicker" class="field" type="month" />
+    </div>
+
+    <div>
+      <label for="fUser">Usuário</label>
+      <select id="fUser" class="field">
+        <option value="">Todos</option>
+      </select>
+      <div class="hint" id="hintUsers" style="margin-top:6px; opacity:.85;"></div>
+    </div>
+
+    <div style="min-width:280px; flex:2;">
+      <label for="busca">Buscar</label>
+      <input id="busca" class="field" type="text" placeholder="Treinamento, CD, desafio, meta..." />
+    </div>
+  </section>
+
+  <div class="kpis">
+    <div class="kpi">
+      <div class="label">Treinamentos no mês</div>
+      <div class="value" id="kpiTreinos">0</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Total de pessoas treinadas</div>
+      <div class="value" id="kpiPessoas">0</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Média de nota</div>
+      <div class="value" id="kpiNota">-</div>
+    </div>
+  </div>
+
+  <p id="msg" class="msg"></p>
+
+  <div class="table-wrap">
+    <table class="table table-sticky" id="tabelaResumo">
+      <thead>
+        <tr>
+          <th style="width:120px;">Data</th>
+          <th style="width:160px;">Usuário</th>
+          <th style="width:140px;">Público</th>
+          <th style="width:280px;">Treinamento</th>
+          <th style="width:240px;">CD</th>
+          <th style="width:110px; text-align:center;">Pessoas</th>
+          <th style="width:90px; text-align:center;">Nota</th>
+          <th style="width:320px;">Desafio</th>
+          <th style="width:320px;">Meta</th>
+          <th>Obs</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="10" style="opacity:.8;">Carregando…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<script type="module">
+  import { db } from "../js/firebase.js";
+  import {
+    collection,
+    getDocs
+  } from "firebase/firestore";
+
+  /* =========================
+     PATHS (este arquivo em /html adm/)
+  ========================= */
+  const PATH_INDEX  = "../index.html";
+  const PATH_MENUADM = "../html menus/menuadm.html";
+
+  /* =========================
+     SESSÃO (padrão do seu sistema)
+  ========================= */
+  function safeParse(raw){ try { return JSON.parse(raw); } catch { return null; } }
+
+  function getCurrentUserName(){
+    const raw = localStorage.getItem("user_session");
+    if(raw){
+      const s = safeParse(raw);
+      if(s?.nome) return String(s.nome).trim();
+    }
+    return (localStorage.getItem("usuarioLogado") || "").trim();
+  }
+
+  const admin = getCurrentUserName();
+  if(!admin) window.location.href = PATH_INDEX;
+
+  document.getElementById("userInfo").textContent = `Admin: ${admin}`;
+
+  document.getElementById("btnMenu").onclick = () => {
+    window.location.href = PATH_MENUADM;
+  };
+
+  document.getElementById("btnLogout").onclick = () => {
+    localStorage.removeItem("user_session");
+    localStorage.removeItem("usuarioLogado");
+    localStorage.removeItem("usuarioKey");
+    window.location.href = PATH_INDEX;
+  };
+
+  /* =========================
+     UI
+  ========================= */
+  const monthPicker = document.getElementById("monthPicker");
+  const fUser = document.getElementById("fUser");
+  const hintUsers = document.getElementById("hintUsers");
+  const busca = document.getElementById("busca");
+  const tbody = document.getElementById("tbody");
+  const msg = document.getElementById("msg");
+  const btnExport = document.getElementById("btnExport");
+  const tabelaResumo = document.getElementById("tabelaResumo");
+
+  const kpiTreinos = document.getElementById("kpiTreinos");
+  const kpiPessoas = document.getElementById("kpiPessoas");
+  const kpiNota = document.getElementById("kpiNota");
+
+  function setMsg(text, type="info"){
+    msg.textContent = text || "";
+    msg.style.color =
+      type === "success" ? "#22c55e" :
+      type === "error" ? "#ef4444" :
+      "#d1d5db";
+  }
+
+  function pad2(n){ return String(n).padStart(2,"0"); }
+
+  function toMonthKey(d){
+    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`;
+  }
+
+  function toBR(iso){
+    if(!iso) return "-";
+    const [y,m,d] = String(iso).split("-");
+    if(!y || !m || !d) return String(iso);
+    return `${d}/${m}/${y}`;
+  }
+
+  function normalize(s){
+    return (s || "").replace(/\s+/g," ").trim();
+  }
+
+  /* =========================
+     FIRESTORE
+  ========================= */
+  const TREINOS_COLLECTION = "treinamentos_realizados";
+  let CACHE_ALL = [];
+
+  async function loadAll(){
+    const snap = await getDocs(collection(db, TREINOS_COLLECTION));
+    const arr = [];
+    snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+    CACHE_ALL = arr;
+  }
+
+  /* =========================
+     USERS SELECT (por mês)
+  ========================= */
+  const USERS_FALLBACK = [
+    "Bruna","Elaine","Euclecio","Pedro","Emerson","Joice",
+    "Michel","Muller","Ricardo","Robert","Rodrigo","Rosilene","Tenório"
+  ];
+
+  function renderUserSelectForMonth(rowsMonth){
+    const set = new Set();
+
+    for(const t of rowsMonth){
+      const u = normalize(t.usuarioNome || "");
+      if(u) set.add(u);
+    }
+
+    for(const u of USERS_FALLBACK) set.add(u);
+
+    const users = Array.from(set)
+      .filter(Boolean)
+      .sort((a,b)=>a.localeCompare(b,"pt-BR"));
+
+    const current = fUser.value || "";
+
+    fUser.innerHTML = `<option value="">Todos</option>` + users.map(u => {
+      const sel = (u === current) ? "selected" : "";
+      return `<option value="${u}" ${sel}>${u}</option>`;
+    }).join("");
+
+    hintUsers.textContent = `Usuários disponíveis: ${users.length}`;
+  }
+
+  /* =========================
+     KPI
+  ========================= */
+  function renderKPIs(rows){
+    const totalTreinos = rows.length;
+
+    let totalP = 0;
+    let somaNota = 0;
+    let qtdNota = 0;
+
+    for(const r of rows){
+      const tp = Number(r.totalPessoas);
+      if(Number.isFinite(tp)) totalP += tp;
+
+      const nm = Number(r.notaMedia);
+      if(Number.isFinite(nm)){
+        somaNota += nm;
+        qtdNota++;
+      }
+    }
+
+    kpiTreinos.textContent = String(totalTreinos);
+    kpiPessoas.textContent = String(totalP);
+    kpiNota.textContent = qtdNota ? (somaNota / qtdNota).toFixed(1) : "-";
+  }
+
+  /* =========================
+     RENDER
+  ========================= */
+  function getFilteredRows(){
+    const yyyyMM = monthPicker.value;
+    const userFilter = normalize(fUser.value);
+    const q = (busca.value || "").toLowerCase();
+
+    let rows = (CACHE_ALL || [])
+      .filter(t => String(t.data || "").slice(0,7) === yyyyMM);
+
+    renderUserSelectForMonth(rows);
+
+    if(userFilter){
+      rows = rows.filter(t => normalize(t.usuarioNome) === userFilter);
+    }
+
+    if(q){
+      rows = rows.filter(t => {
+        const blob = [
+          t.usuarioNome,
+          t.publico,
+          t.treinamento,
+          t.cd,
+          t.desafio,
+          t.meta,
+          t.obs
+        ].join(" ").toLowerCase();
+
+        return blob.includes(q);
+      });
+    }
+
+    rows.sort((a,b)=>{
+      const da = Date.parse(String(a.data || "")) || 0;
+      const db = Date.parse(String(b.data || "")) || 0;
+      if(da !== db) return da - db;
+      return String(a.usuarioNome || "").localeCompare(String(b.usuarioNome || ""),"pt-BR");
+    });
+
+    return rows;
+  }
+
+  function render(){
+    const rows = getFilteredRows();
+
+    renderKPIs(rows);
+
+    tbody.innerHTML = "";
+
+    if(rows.length === 0){
+      tbody.innerHTML = `<tr><td colspan="10" style="opacity:.8;">Sem registros para este mês/filtros.</td></tr>`;
+      return;
+    }
+
+    for(const t of rows){
+      tbody.innerHTML += `
+        <tr>
+          <td>${toBR(t.data)}</td>
+          <td><span class="pill">${t.usuarioNome || "-"}</span></td>
+          <td class="muted">${t.publico || "-"}</td>
+          <td>${t.treinamento || "-"}</td>
+          <td>${t.cd || "-"}</td>
+          <td style="text-align:center;">${t.totalPessoas ?? "-"}</td>
+          <td style="text-align:center;">${t.notaMedia ?? "-"}</td>
+          <td>${t.desafio || "-"}</td>
+          <td>${t.meta || "-"}</td>
+          <td>${t.obs || "-"}</td>
+        </tr>
+      `;
+    }
+  }
+
+  /* =========================
+     EXPORTAR EXCEL
+  ========================= */
+  function exportarExcel(){
+    const rows = getFilteredRows();
+
+    if(!rows.length){
+      setMsg("Não há dados para exportar com os filtros atuais.", "error");
+      return;
+    }
+
+    const dados = rows.map(t => ({
+      "Data": toBR(t.data),
+      "Usuário": t.usuarioNome || "-",
+      "Público": t.publico || "-",
+      "Treinamento": t.treinamento || "-",
+      "CD": t.cd || "-",
+      "Pessoas": t.totalPessoas ?? "-",
+      "Nota": t.notaMedia ?? "-",
+      "Desafio": t.desafio || "-",
+      "Meta": t.meta || "-",
+      "Obs": t.obs || "-"
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dados);
+
+    const colunas = [
+      { wch: 12 },
+      { wch: 18 },
+      { wch: 14 },
+      { wch: 35 },
+      { wch: 28 },
+      { wch: 12 },
+      { wch: 10 },
+      { wch: 40 },
+      { wch: 40 },
+      { wch: 40 }
+    ];
+    ws["!cols"] = colunas;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Treinamentos");
+
+    const nomeMes = monthPicker.value || "sem-mes";
+    const nomeUsuario = normalize(fUser.value || "todos")
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
+    const nomeArquivo = `resumo_treinamentos_${nomeMes}_${nomeUsuario}.xlsx`;
+
+    XLSX.writeFile(wb, nomeArquivo);
+    setMsg("Excel exportado com sucesso ✅", "success");
+  }
+
+  btnExport.addEventListener("click", exportarExcel);
+
+  /* =========================
+     INIT
+  ========================= */
+  monthPicker.value = toMonthKey(new Date());
+
+  try{
+    setMsg("Carregando do Firebase…");
+    await loadAll();
+    setMsg("");
+    render();
+  }catch(e){
+    console.error(e);
+    setMsg("Erro ao carregar do Firebase. Verifique Rules/Conexão.", "error");
+    tbody.innerHTML = `<tr><td colspan="10" style="opacity:.8;">Falha ao carregar.</td></tr>`;
+  }
+
+  monthPicker.addEventListener("change", render);
+  fUser.addEventListener("change", render);
+  busca.addEventListener("input", render);
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1040 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RPS | Admin (Semanal)</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --card:rgba(255,255,255,.06);
+      --border:rgba(255,255,255,.10);
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --danger:#ef4444;
+      --ok:#22c55e;
+      --warn:#facc15;
+      --field:rgba(0,0,0,.30);
+      --accent:#d91b2e;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto}
+
+    .topbar{
+      position:sticky; top:0; z-index:999;
+      backdrop-filter: blur(10px);
+      background: rgba(11,15,20,.82);
+      border-bottom:1px solid rgba(255,255,255,.08);
+      padding:14px 0;
+    }
+    .topbar-inner{
+      max-width:1200px;margin:0 auto;padding:0 18px;
+      display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;
+    }
+    .topbar h2{margin:0;font-size:18px}
+    .hint{color:var(--muted);font-size:12px;margin-top:4px}
+
+    .btn{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 14px;
+      font-weight:900;
+      cursor:pointer;
+      background:transparent;
+      color:var(--text);
+    }
+    .btn:hover{filter:brightness(1.06)}
+    .btn-primary{
+      background: var(--accent);
+      border-color: transparent;
+    }
+    .btn-primary:hover{filter:brightness(1.08)}
+    .btn-ghost{
+      background: rgba(255,255,255,.04);
+    }
+
+    main{max-width:1200px;margin:0 auto;padding:18px}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:16px;
+    }
+
+    .row-between{
+      display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;
+    }
+
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    .field{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:var(--field);
+      color:var(--text);
+      outline:none;
+    }
+    .field:focus{
+      border-color: rgba(255,59,59,.55);
+      box-shadow: 0 0 0 4px rgba(217,27,46,.18);
+    }
+
+    .filters{
+      display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;
+      margin-top:14px;
+    }
+    .filters > div{min-width:220px;flex:1}
+
+    .kpis{
+      display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;
+    }
+    .kpi{
+      flex:1;min-width:220px;
+      background: rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      padding:12px 14px;
+    }
+    .kpi .k-label{font-size:12px;color:var(--muted)}
+    .kpi .k-val{margin-top:6px;font-size:18px;font-weight:900}
+
+    .table-wrap{
+      overflow:auto;margin-top:14px;border-radius:14px;border:1px solid var(--border);
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:980px;
+      background: rgba(255,255,255,.02);
+    }
+    thead th{
+      position:sticky;top:0;
+      background: rgba(0,0,0,.35);
+      backdrop-filter: blur(8px);
+      text-align:left;
+      font-size:12px;
+      color:var(--muted);
+      padding:12px;
+      border-bottom:1px solid var(--border);
+      white-space:nowrap;
+    }
+    tbody td{
+      padding:12px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      vertical-align:middle;
+    }
+    tbody tr:hover{background:rgba(255,255,255,.04)}
+    tbody tr{cursor:pointer}
+
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid var(--border);
+      font-size:12px;font-weight:900;white-space:nowrap;
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+    }
+    .pill-ok{border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.12); color: var(--ok);}
+    .pill-bad{border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.12); color: var(--danger);}
+    .pill-warn{border-color: rgba(250,204,21,.35); background: rgba(250,204,21,.12); color: var(--warn);}
+
+    .msg{margin-top:10px;font-size:13px;font-weight:900;color:#d1d5db}
+
+    /* ===== Modal ===== */
+    .modal-backdrop{
+      position:fixed;inset:0;z-index:9999;
+      display:none;align-items:center;justify-content:center;
+      padding:18px;background:rgba(0,0,0,.60);
+    }
+    .modal{
+      width:min(1100px,100%);
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(17,24,39,.96);
+      box-shadow: 0 24px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .modal-header{
+      display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+      padding:16px;border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .modal-header h3{margin:0;font-size:16px}
+    .modal-header .sub{margin-top:6px;font-size:12px;opacity:.85;line-height:1.35}
+    .modal-close{
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.9);
+      border-radius:12px;padding:10px 12px;cursor:pointer;font-weight:900;
+    }
+
+    .modal-body{padding:14px 16px 10px 16px}
+    .modal-tools{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;
+      margin-bottom:12px;
+    }
+    .modal-tools > div{min-width:220px;flex:1}
+    .mini-hint{font-size:12px;color:var(--muted);margin-top:6px}
+
+    /* Tabela editável (cara de grid) */
+    .grid-wrap{
+      overflow:auto;border-radius:14px;border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.02);
+    }
+    .grid{
+      width:100%;
+      border-collapse:collapse;
+      min-width:1100px;
+    }
+    .grid thead th{
+      background: rgba(0,0,0,.35);
+      color: var(--muted);
+      font-size:12px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      padding:10px;
+      position:sticky; top:0;
+      z-index:2;
+    }
+    .grid tbody td{
+      padding:8px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      vertical-align:top;
+    }
+    .grid tbody tr:hover{background:rgba(255,255,255,.03)}
+    .cell{
+      width:100%;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.95);
+      outline:none;
+      padding:10px 10px;
+    }
+    .cell:focus{
+      border-color: rgba(255,59,59,.55);
+      box-shadow: 0 0 0 4px rgba(217,27,46,.18);
+    }
+    .cell.multi{
+      height:44px;
+    }
+    .cell.small{
+      padding:8px 10px;
+    }
+
+    .row-late{
+      outline: 2px solid rgba(239,68,68,.25);
+      background: rgba(239,68,68,.07);
+    }
+    .late-badge{
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:11px;font-weight:900;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(239,68,68,.35);
+      background: rgba(239,68,68,.12);
+      color: #fecaca;
+      white-space:nowrap;
+    }
+    .ok-badge{
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:11px;font-weight:900;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(34,197,94,.35);
+      background: rgba(34,197,94,.12);
+      color: #bbf7d0;
+      white-space:nowrap;
+    }
+
+    .btn-mini{
+      padding:10px 12px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.95);
+      font-weight:900;cursor:pointer;white-space:nowrap;
+    }
+    .btn-mini.danger{
+      border-color: rgba(239,68,68,.35);
+      background: rgba(239,68,68,.12);
+      color: #fecaca;
+    }
+
+    .modal-actions{
+      display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;
+      padding:12px 16px 16px 16px;border-top:1px solid rgba(255,255,255,.08);
+    }
+
+    .weeks-box{
+      margin-top:14px;
+      background: rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      padding:12px 14px;
+    }
+    .weeks-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  </style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <h2>RPS — Admin (por Responsável)</h2>
+      <div id="userInfo" class="hint"></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-ghost" id="btnMenu" type="button">Voltar ao Menu</button>
+      <button class="btn btn-ghost" id="btnLogout" type="button">Sair</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <div class="row-between">
+      <div>
+        <h3 style="margin:0 0 6px">Visão Semanal (ADM)</h3>
+        <div class="hint">Linhas por responsável (Bruna, Elaine, Euclecio, Pedro). Clique para abrir e lançar/editar atividades.</div>
+      </div>
+      <button class="btn btn-primary" id="btnReload" type="button">Atualizar</button>
+    </div>
+
+    <div class="filters">
+      <div>
+        <label for="yearPicker">Ano</label>
+        <select id="yearPicker" class="field"></select>
+      </div>
+
+      <div>
+        <label for="searchBox">Buscar</label>
+        <input id="searchBox" class="field" type="text" placeholder="Responsável, atividade..." />
+      </div>
+    </div>
+
+    <div class="weeks-box">
+      <div class="weeks-head" style="align-items:flex-end;">
+        <div>
+          <div style="font-weight:900;">Semanas (Opcional)</div>
+          <div class="hint">Por padrão vem “Todas”. Se quiser, selecione uma semana.</div>
+        </div>
+        <div style="min-width:340px;flex:1;max-width:520px;">
+          <label for="weekFilter">Semana</label>
+          <select id="weekFilter" class="field">
+            <option value="ALL" selected>Todas as semanas</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi">
+        <div class="k-label">Mapeadas (filtro atual)</div>
+        <div class="k-val" id="kpiTotal">0</div>
+      </div>
+      <div class="kpi">
+        <div class="k-label">Concluídas</div>
+        <div class="k-val" id="kpiDone">0</div>
+      </div>
+      <div class="kpi">
+        <div class="k-label">Pendentes</div>
+        <div class="k-val" id="kpiPending">0</div>
+      </div>
+      <div class="kpi">
+        <div class="k-label">Fora do prazo</div>
+        <div class="k-val" id="kpiLate">0</div>
+      </div>
+    </div>
+
+    <div class="msg" id="msg"></div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:260px;">Responsável</th>
+            <th style="width:160px; text-align:center;">Mapeadas</th>
+            <th style="width:160px; text-align:center;">Concluídas</th>
+            <th style="width:160px; text-align:center;">Pendentes</th>
+            <th style="width:180px; text-align:center;">Fora do prazo</th>
+            <th style="width:180px;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyMain">
+          <tr><td colspan="6" style="opacity:.8;">Carregando…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </section>
+</main>
+
+<!-- ===== MODAL / LANÇAMENTOS ===== -->
+<div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3 id="mTitle">RPS — Lançamentos</h3>
+        <div class="sub" id="mSub"></div>
+      </div>
+      <button class="modal-close" id="mClose" type="button">Fechar</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-tools">
+        <div>
+          <label for="mStatusFilter">Filtrar por Status</label>
+          <select id="mStatusFilter" class="field">
+            <option value="pendentes" selected>Pendentes (padrão)</option>
+            <option value="todos">Todos</option>
+            <option value="realizado">Realizado</option>
+            <option value="nao_realizado">Não realizado</option>
+            <option value="planejado">Planejado</option>
+            <option value="em_andamento">Em andamento</option>
+            <option value="realizando">Realizando</option>
+          </select>
+          <div class="mini-hint">A janela sempre abre filtrando pendentes.</div>
+        </div>
+
+        <div>
+          <label>&nbsp;</label>
+          <button id="btnAddRow" class="btn btn-primary" type="button" style="width:100%">+ Nova atividade</button>
+        </div>
+      </div>
+
+      <div class="grid-wrap">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th style="width:420px;">Atividade</th>
+              <th style="width:230px;">Prazo</th>
+              <th style="width:280px;">Responsáveis (pode +1)</th>
+              <th style="width:220px;">Status</th>
+              <th style="width:160px;">Situação</th>
+              <th style="width:140px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyActs">
+            <tr><td colspan="6" style="opacity:.8;padding:12px;">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mini-hint" style="margin-top:10px;">
+        Regra do prazo: se passar do prazo e não estiver “Realizado”, vira automaticamente “Pendente (Fora do prazo)”.
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-mini" id="btnCancelModal" type="button">Cancelar</button>
+      <button class="btn-mini" id="btnSaveModal" type="button" style="background:rgba(217,27,46,.95);border-color:transparent;">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { db } from "../js/firebase.js";
+  import {
+    collection,
+    getDocs,
+    query,
+    where,
+    doc,
+    writeBatch,
+    serverTimestamp
+  } from "firebase/firestore";
+
+  const PATH_INDEX  = "../index.html";
+  const PATH_MENUADM = "../html_menus/menuadm.html";
+
+  function safeParse(raw){ try { return JSON.parse(raw); } catch { return null; } }
+  function getCurrentUserName(){
+    const raw = localStorage.getItem("user_session");
+    if(raw){
+      const s = safeParse(raw);
+      if(s?.nome) return String(s.nome).trim();
+    }
+    return (localStorage.getItem("usuarioLogado") || "").trim();
+  }
+
+  const admin = getCurrentUserName();
+  if(!admin) window.location.href = PATH_INDEX;
+  document.getElementById("userInfo").textContent = `Admin: ${admin}`;
+
+  document.getElementById("btnMenu").onclick = () => window.location.href = PATH_MENUADM;
+  document.getElementById("btnLogout").onclick = () => {
+    localStorage.removeItem("user_session");
+    localStorage.removeItem("usuarioLogado");
+    localStorage.removeItem("usuarioKey");
+    window.location.href = PATH_INDEX;
+  };
+
+  const RPS_COLLECTION = "rps_atividades";
+  const ADM_USERS = ["Bruna","Elaine","Euclecio","Pedro"];
+
+  const STATUS_OPTS = [
+    { key:"planejado",     label:"Planejado" },
+    { key:"em_andamento",  label:"Em andamento" },
+    { key:"realizando",    label:"Realizando" },
+    { key:"realizado",     label:"Realizado" },
+    { key:"nao_realizado", label:"Não realizado" }
+  ];
+
+  const yearPicker = document.getElementById("yearPicker");
+  const searchBox = document.getElementById("searchBox");
+  const weekFilter = document.getElementById("weekFilter");
+  const btnReload = document.getElementById("btnReload");
+  const msg = document.getElementById("msg");
+  const tbodyMain = document.getElementById("tbodyMain");
+
+  const kpiTotal = document.getElementById("kpiTotal");
+  const kpiDone = document.getElementById("kpiDone");
+  const kpiPending = document.getElementById("kpiPending");
+  const kpiLate = document.getElementById("kpiLate");
+
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const mClose = document.getElementById("mClose");
+  const mTitle = document.getElementById("mTitle");
+  const mSub = document.getElementById("mSub");
+  const mStatusFilter = document.getElementById("mStatusFilter");
+  const btnAddRow = document.getElementById("btnAddRow");
+  const tbodyActs = document.getElementById("tbodyActs");
+  const btnCancelModal = document.getElementById("btnCancelModal");
+  const btnSaveModal = document.getElementById("btnSaveModal");
+
+  function setMsg(text, type="info"){
+    msg.textContent = text || "";
+    msg.style.color = type === "success" ? "#22c55e" : (type === "error" ? "#ef4444" : "#d1d5db");
+  }
+
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function iso(y,m,d){ return `${y}-${pad2(m)}-${pad2(d)}`; }
+  function toBR(isoDate){
+    if(!isoDate) return "-";
+    const [y,m,d] = String(isoDate).split("-");
+    return `${d}/${m}/${y}`;
+  }
+  function todayISO(){
+    const d = new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  }
+
+  const MONTHS = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+
+  function weeksOfYear(year){
+    const weeks = [];
+    for(let m=1;m<=12;m++){
+      const lastDay = new Date(year, m, 0).getDate();
+      const ranges = [
+        { w:1, start:1, end:Math.min(7,lastDay) },
+        { w:2, start:8, end:Math.min(14,lastDay) },
+        { w:3, start:15, end:Math.min(21,lastDay) },
+        { w:4, start:22, end:Math.min(28,lastDay) },
+        { w:5, start:29, end:lastDay }
+      ];
+      for(const r of ranges){
+        if(r.start > lastDay) continue;
+        const inicio = iso(year,m,r.start);
+        const fim = iso(year,m,r.end);
+        const weekKey = `${year}-${pad2(m)}-W${r.w}`;
+        weeks.push({
+          weekKey,
+          ano: year,
+          mes: m,
+          semanaMes: r.w,
+          inicio,
+          fim,
+          label: `${r.w}ª semana de ${MONTHS[m-1]}`
+        });
+      }
+    }
+    return weeks;
+  }
+
+  let WEEKS = [];
+  let ALL_ACTS = [];
+  let CURRENT_RESP = null;
+
+  function escapeHtml(s){
+    return (s || "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function normalizeAct(a){
+    const arr = Array.isArray(a.responsaveis) ? a.responsaveis : (a.responsavel ? [a.responsavel] : []);
+    return {
+      ...a,
+      responsaveis: arr.filter(Boolean),
+      prazo: (a.prazo || "").toString().slice(0,10) // ISO yyyy-mm-dd
+    };
+  }
+
+  function getSelectedWeekKeys(){
+    const v = (weekFilter.value || "ALL").trim();
+    if(v === "ALL") return WEEKS.map(w => w.weekKey);
+    return [v];
+  }
+
+  function isPendingStatus(st){
+    return st !== "realizado" && st !== "nao_realizado";
+  }
+
+  function isLate(act){
+    // fora do prazo: pendente e (prazo < hoje)
+    if(!isPendingStatus(act.status)) return false;
+    const p = String(act.prazo || "");
+    if(!p) return false;
+    return todayISO() > p;
+  }
+
+  function effectiveStatus(act){
+    // “automaticamente se não fizer ficar pendente”
+    // aqui é: se atrasou e não está realizado -> consideramos pendente/atrasado na UI e nas contagens
+    if(isLate(act)) return "late";
+    if(act.status === "realizado") return "done";
+    if(act.status === "nao_realizado") return "notdone";
+    return "pending";
+  }
+
+  function computeAggByResp(resp, acts){
+    const mine = acts.filter(a => (a.responsaveis || []).includes(resp));
+    const total = mine.length;
+    const done = mine.filter(x => x.status === "realizado").length;
+    const pending = mine.filter(x => isPendingStatus(x.status)).length;
+    const late = mine.filter(x => isLate(x)).length;
+    return { total, done, pending, late };
+  }
+
+  function statusPill(agg){
+    if(agg.total === 0) return `<span class="pill">Sem itens</span>`;
+    if(agg.late > 0) return `<span class="pill pill-bad">Fora do prazo</span>`;
+    if(agg.pending > 0) return `<span class="pill pill-warn">Pendente</span>`;
+    return `<span class="pill pill-ok">Fechado</span>`;
+  }
+
+  function filteredActsByUI(){
+    const selected = new Set(getSelectedWeekKeys());
+    const q = (searchBox.value || "").toLowerCase().trim();
+
+    let base = (ALL_ACTS || []).map(normalizeAct)
+      .filter(a => selected.has(String(a.weekKey || "").trim()));
+
+    if(q){
+      base = base.filter(a => {
+        const blob = [
+          (a.atividade||""),
+          (a.status||""),
+          (a.prazo||""),
+          (a.responsaveis||[]).join(" "),
+          (a.weekKey||"")
+        ].join(" ").toLowerCase();
+        return blob.includes(q);
+      });
+    }
+
+    return base;
+  }
+
+  async function loadYearData(year){
+    setMsg("Carregando RPS do Firebase…");
+    const snap = await getDocs(query(collection(db, RPS_COLLECTION), where("ano","==",year)));
+    const arr = [];
+    snap.forEach(d => arr.push({ id:d.id, ...d.data() }));
+    ALL_ACTS = arr.map(normalizeAct);
+    setMsg("");
+  }
+
+  function buildWeekFilter(){
+    weekFilter.innerHTML =
+      `<option value="ALL" selected>Todas as semanas</option>` +
+      WEEKS.map(w => `<option value="${w.weekKey}">${w.label} (${toBR(w.inicio)}–${toBR(w.fim)})</option>`).join("");
+  }
+
+  weekFilter.addEventListener("change", ()=> renderMain());
+
+  function renderKPIs(){
+    const acts = filteredActsByUI();
+
+    const total = acts.length;
+    const done = acts.filter(x => x.status === "realizado").length;
+    const pending = acts.filter(x => isPendingStatus(x.status)).length;
+    const late = acts.filter(x => isLate(x)).length;
+
+    kpiTotal.textContent = String(total);
+    kpiDone.textContent = String(done);
+    kpiPending.textContent = String(pending);
+    kpiLate.textContent = String(late);
+  }
+
+  function renderMain(){
+    const acts = filteredActsByUI();
+    tbodyMain.innerHTML = "";
+
+    const rows = ADM_USERS.map(resp => ({ resp, agg: computeAggByResp(resp, acts) }));
+
+    const q = (searchBox.value || "").toLowerCase().trim();
+    const finalRows = q
+      ? rows.filter(r => r.resp.toLowerCase().includes(q) || r.agg.total > 0)
+      : rows;
+
+    if(finalRows.length === 0){
+      tbodyMain.innerHTML = `<tr><td colspan="6" style="opacity:.8;">Sem dados.</td></tr>`;
+      renderKPIs();
+      return;
+    }
+
+    for(const r of finalRows){
+      const tr = document.createElement("tr");
+      tr.dataset.resp = r.resp;
+
+      tr.innerHTML = `
+        <td style="font-weight:900;">${r.resp}</td>
+        <td style="text-align:center;font-weight:900;">${r.agg.total}</td>
+        <td style="text-align:center;font-weight:900;color:#22c55e;">${r.agg.done}</td>
+        <td style="text-align:center;font-weight:900;color:#facc15;">${r.agg.pending}</td>
+        <td style="text-align:center;font-weight:900;color:#ef4444;">${r.agg.late}</td>
+        <td>${statusPill(r.agg)}</td>
+      `;
+
+      tr.addEventListener("click", ()=> openModalForResp(r.resp));
+      tbodyMain.appendChild(tr);
+    }
+
+    renderKPIs();
+  }
+
+  function openModal(){
+    modalBackdrop.style.display = "flex";
+  }
+  function closeModal(){
+    modalBackdrop.style.display = "none";
+    CURRENT_RESP = null;
+    tbodyActs.innerHTML = "";
+    mStatusFilter.value = "pendentes";
+  }
+
+  mClose.addEventListener("click", closeModal);
+  btnCancelModal.addEventListener("click", closeModal);
+  modalBackdrop.addEventListener("click", (e) => { if(e.target === modalBackdrop) closeModal(); });
+
+  function statusOptionsHtml(current){
+    return STATUS_OPTS.map(s => `<option value="${s.key}" ${s.key===current?"selected":""}>${s.label}</option>`).join("");
+  }
+
+  function responsaveisOptionsHtml(selectedArr){
+    const sel = new Set(selectedArr || []);
+    return ADM_USERS.map(u => `<option value="${u}" ${sel.has(u)?"selected":""}>${u}</option>`).join("");
+  }
+
+  function situationBadge(act){
+    const eff = effectiveStatus(act);
+    if(eff === "late") return `<span class="late-badge">⏰ Fora do prazo</span>`;
+    if(eff === "done") return `<span class="ok-badge">✅ Concluído</span>`;
+    if(eff === "notdone") return `<span class="late-badge" style="border-color:rgba(250,204,21,.35);background:rgba(250,204,21,.12);color:#fde68a;">⚠️ Não realizado</span>`;
+    return `<span class="pill pill-warn">Pendente</span>`;
+  }
+
+  function actRowTemplate(item){
+    const id = item?.id || "";
+    const weekKey = item?.weekKey || "";
+    const atividade = (item?.atividade || "").toString();
+    const status = (item?.status || "planejado").toString();
+    const prazo = (item?.prazo || "").toString().slice(0,10);
+    const respArr = Array.isArray(item?.responsaveis) ? item.responsaveis : (item?.responsavel ? [item.responsavel] : []);
+
+    const lateClass = isLate({ ...item, prazo }) ? "row-late" : "";
+
+    return `
+      <tr class="${lateClass}" data-id="${escapeHtml(id)}" data-weekkey="${escapeHtml(weekKey)}">
+        <td>
+          <input class="cell" data-field="atividade" maxlength="160" placeholder="Descreva a atividade..." value="${escapeHtml(atividade)}">
+        </td>
+        <td>
+          <input class="cell small" data-field="prazo" type="date" value="${escapeHtml(prazo)}">
+          <div class="mini-hint">Se passar, vira pendente.</div>
+        </td>
+        <td>
+          <select class="cell multi" multiple data-field="responsaveis" title="Ctrl (Windows) / Command (Mac) para multi">
+            ${responsaveisOptionsHtml(respArr)}
+          </select>
+          <div class="mini-hint">Ctrl/Command para marcar +1</div>
+        </td>
+        <td>
+          <select class="cell" data-field="status">
+            ${statusOptionsHtml(status)}
+          </select>
+        </td>
+        <td style="white-space:nowrap;">
+          ${situationBadge({ ...item, prazo })}
+        </td>
+        <td>
+          <button class="btn-mini danger" type="button" data-del>Excluir</button>
+        </td>
+      </tr>
+    `;
+  }
+
+  function getWeekMeta(weekKey){
+    return WEEKS.find(w => w.weekKey === weekKey) || null;
+  }
+
+  function actsForCurrentResp(){
+    if(!CURRENT_RESP) return [];
+
+    const selectedWeeks = new Set(getSelectedWeekKeys());
+    let base = (ALL_ACTS || []).map(normalizeAct)
+      .filter(a => selectedWeeks.has(String(a.weekKey || "").trim()))
+      .filter(a => (a.responsaveis || []).includes(CURRENT_RESP));
+
+    const sf = (mStatusFilter.value || "pendentes").trim();
+
+    if(sf === "pendentes"){
+      base = base.filter(a => isPendingStatus(a.status)); // inclui atrasadas
+    } else if(sf !== "todos"){
+      base = base.filter(a => a.status === sf);
+    }
+
+    // Ordena: atrasadas primeiro, depois pendentes, depois texto
+    const order = { planejado:1, em_andamento:2, realizando:3, realizado:4, nao_realizado:5 };
+    base.sort((a,b)=>{
+      const la = isLate(a) ? 0 : 1;
+      const lb = isLate(b) ? 0 : 1;
+      if(la !== lb) return la - lb;
+
+      const oa = order[a.status] || 99;
+      const ob = order[b.status] || 99;
+      if(oa !== ob) return oa - ob;
+
+      return String(a.atividade||"").localeCompare(String(b.atividade||""),"pt-BR");
+    });
+
+    return base;
+  }
+
+  function openModalForResp(resp){
+    CURRENT_RESP = resp;
+
+    const wk = weekFilter.value === "ALL"
+      ? "Todas as semanas"
+      : (getWeekMeta(weekFilter.value)?.label || weekFilter.value);
+
+    mTitle.textContent = `RPS — Lançamentos`;
+    mSub.textContent = `Responsável: ${resp} • Semana: ${wk}`;
+
+    mStatusFilter.value = "pendentes";
+    renderModalActivities();
+    openModal();
+  }
+
+  function renderModalActivities(){
+    const list = actsForCurrentResp();
+    tbodyActs.innerHTML = "";
+
+    if(list.length === 0){
+      tbodyActs.innerHTML = `<tr><td colspan="6" style="opacity:.8;padding:12px;">Sem atividades para este filtro. Clique em “+ Nova atividade”.</td></tr>`;
+      return;
+    }
+
+    tbodyActs.innerHTML = list.map(actRowTemplate).join("");
+
+    tbodyActs.querySelectorAll("[data-del]").forEach(btn=>{
+      btn.addEventListener("click", (e)=>{
+        e.stopPropagation();
+        const tr = btn.closest("tr");
+        if(!tr) return;
+        tr.dataset.delete = "1";
+        tr.style.opacity = ".55";
+        tr.querySelectorAll("input,select,button").forEach(el => {
+          if(el !== btn) el.disabled = true;
+        });
+      });
+    });
+  }
+
+  mStatusFilter.addEventListener("change", renderModalActivities);
+
+  btnAddRow.addEventListener("click", ()=>{
+    if(!CURRENT_RESP) return;
+
+    // Define a semana para salvar: se ALL, usa semana do dia atual
+    let wk = (weekFilter.value || "ALL").trim();
+    if(wk === "ALL"){
+      const t = todayISO();
+      const candidate = WEEKS.find(w => w.inicio <= t && w.fim >= t);
+      wk = candidate ? candidate.weekKey : (WEEKS[0]?.weekKey || "");
+    }
+    const meta = getWeekMeta(wk);
+    if(!meta){
+      setMsg("Não consegui definir a semana. Selecione uma semana no filtro.", "error");
+      return;
+    }
+
+    if(tbodyActs.querySelector("td")?.textContent?.includes("Sem atividades")){
+      tbodyActs.innerHTML = "";
+    }
+
+    const tmp = document.createElement("tbody");
+    tmp.innerHTML = actRowTemplate({
+      id:"",
+      weekKey: meta.weekKey,
+      ano: meta.ano,
+      mes: meta.mes,
+      semanaMes: meta.semanaMes,
+      inicio: meta.inicio,
+      fim: meta.fim,
+      atividade:"",
+      prazo: meta.fim,              // ✅ prazo automático default = fim da semana
+      responsaveis:[CURRENT_RESP],
+      status:"planejado"
+    });
+
+    const tr = tmp.firstElementChild;
+    tbodyActs.appendChild(tr);
+
+    tr.querySelector("[data-del]")?.addEventListener("click",(e)=>{
+      e.stopPropagation();
+      tr.remove();
+      if(tbodyActs.children.length === 0){
+        tbodyActs.innerHTML = `<tr><td colspan="6" style="opacity:.8;padding:12px;">Sem atividades para este filtro. Clique em “+ Nova atividade”.</td></tr>`;
+      }
+    });
+  });
+
+  function makeId(){
+    if(globalThis.crypto?.randomUUID) return crypto.randomUUID();
+    return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  }
+
+  function getMultiSelected(selectEl){
+    if(!selectEl) return [];
+    return [...selectEl.options].filter(o => o.selected).map(o => o.value).filter(Boolean);
+  }
+
+  async function saveModalToFirestore(){
+    if(!CURRENT_RESP) return;
+
+    const rows = [...tbodyActs.querySelectorAll("tr[data-id]")];
+    const batch = writeBatch(db);
+
+    for(const tr of rows){
+      const markedDelete = tr.dataset.delete === "1";
+      const idExisting = (tr.dataset.id || "").trim();
+      const weekKey = (tr.dataset.weekkey || "").trim();
+
+      if(markedDelete){
+        if(idExisting) batch.delete(doc(db, RPS_COLLECTION, idExisting));
+        continue;
+      }
+
+      const atividade = (tr.querySelector("[data-field='atividade']")?.value || "").trim();
+      const status = (tr.querySelector("[data-field='status']")?.value || "planejado").trim();
+      const prazo = (tr.querySelector("[data-field='prazo']")?.value || "").trim(); // ✅ novo
+      const respSel = getMultiSelected(tr.querySelector("[data-field='responsaveis']"));
+
+      if(!atividade && respSel.length === 0){
+        if(idExisting) batch.delete(doc(db, RPS_COLLECTION, idExisting));
+        continue;
+      }
+
+      const meta = getWeekMeta(weekKey);
+      if(!meta){
+        throw new Error("SEM_WEEK_META");
+      }
+
+      const id = idExisting || `${weekKey}_${makeId()}`;
+      const ref = doc(db, RPS_COLLECTION, id);
+
+      // ✅ regra automática: se passou do prazo e não realizado, mantém como pendente (não força mudar status)
+      // a “pendência por atraso” é tratada na UI/contagem via isLate().
+      const payload = {
+        weekKey,
+        ano: meta.ano,
+        mes: meta.mes,
+        semanaMes: meta.semanaMes,
+        inicio: meta.inicio,
+        fim: meta.fim,
+
+        atividade,
+        prazo: prazo || meta.fim, // default
+        responsaveis: respSel.length ? respSel : [CURRENT_RESP],
+        status: status || "planejado",
+
+        updatedAt: serverTimestamp(),
+        updatedBy: admin
+      };
+
+      if(!idExisting){
+        payload.createdAt = serverTimestamp();
+        payload.createdBy = admin;
+      }
+
+      batch.set(ref, payload, { merge:true });
+    }
+
+    await batch.commit();
+
+    const selectedYear = Number(yearPicker.value);
+    await loadYearData(selectedYear);
+
+    renderMain();
+  }
+
+  btnSaveModal.addEventListener("click", async ()=>{
+    try{
+      setMsg("Salvando…");
+      await saveModalToFirestore();
+      setMsg("Salvo ✅", "success");
+      closeModal();
+    }catch(e){
+      console.error(e);
+      setMsg("Erro ao salvar/excluir. Verifique Rules (rps_atividades) e conexão.", "error");
+    }
+  });
+
+  function initYears(){
+    const now = new Date();
+    const y = now.getFullYear();
+    const years = [y-1, y, y+1];
+    yearPicker.innerHTML = years.map(v => `<option value="${v}">${v}</option>`).join("");
+    yearPicker.value = String(y);
+  }
+
+  async function boot(){
+    initYears();
+    const selectedYear = Number(yearPicker.value);
+    WEEKS = weeksOfYear(selectedYear);
+    buildWeekFilter();
+    await loadYearData(selectedYear);
+    renderMain();
+  }
+
+  yearPicker.addEventListener("change", async ()=>{
+    try{
+      const selectedYear = Number(yearPicker.value);
+      WEEKS = weeksOfYear(selectedYear);
+      buildWeekFilter();
+      await loadYearData(selectedYear);
+      renderMain();
+    }catch(e){
+      console.error(e);
+      setMsg("Erro ao carregar o ano no Firebase.", "error");
+    }
+  });
+
+  searchBox.addEventListener("input", renderMain);
+  btnReload.addEventListener("click", boot);
+
+  try{
+    await boot();
+  }catch(e){
+    console.error(e);
+    setMsg("Falha ao iniciar. Verifique Rules/Conexão.", "error");
+  }
+</script>
+
+</body>
+</html>

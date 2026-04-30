@@ -1,13 +1,213 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Portal de Treinamentos</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
 
+<body class="bg">
+
+<main class="center-wrapper">
+  <div class="login-card">
+    <div class="logo-box">GP</div>
+
+    <h2>Bem-vindo</h2>
+    <p class="hint">Selecione seu nome para acessar o sistema</p>
+
+<div class="form-group">
+  <label for="usuario">Usuário</label>
+  <select id="usuario">
+    <option value="" disabled selected>Selecione...</option>
+    <option>Alex</option>
+    <option>Daniel</option>
+    <option>Emerson</option>
+    <option>Euclecio</option>
+    <option>Felipe</option>
+    <option>Joice</option>
+    <option>Maiello</option>
+    <option>Michel</option>
+    <option>Muller</option>
+    <option>Robert</option>
+    <option>Rodrigo</option>
+    <option>Rosilene</option>
+    <option>Tenório</option>
+    <option>Victor</option>
+  </select>
+</div>
+
+    <button id="btnEntrar" class="btn-primary" type="button">Entrar</button>
+
+    <p id="msg" class="msg"></p>
+  </div>
+</main>
+
+<script type="module">
+  import { db, handleFirestoreError, OperationType, auth } from "./js/firebase.js";
+  import { signInAnonymously } from "firebase/auth";
+  import { collection, addDoc, serverTimestamp, doc, getDoc, getDocs, query, limit } from "firebase/firestore";
+
+  async function testConnection() {
+    try {
+      if (!auth.currentUser) await signInAnonymously(auth);
+      const testRef = doc(db, "cds", "connection-test");
+      await getDoc(testRef);
+      console.log("Conectado ao Firebase com sucesso.");
+    } catch (error) {
+       console.error("Erro CRÍTICO de conexão Firebase:", error);
+       handleFirestoreError(error, OperationType.GET, "conn-test");
+    }
+  }
+  testConnection().catch(e => {
+    try {
+      const errObj = JSON.parse(e.message);
+      setMsg(`Erro de conexão: ${errObj.error} (Path: ${errObj.path}, UID: ${errObj.authInfo.userId || 'não logado'})`);
+    } catch {
+      setMsg("Erro de conexão: " + e.message);
+    }
+  });
+
+  const usuarioSelect = document.getElementById("usuario");
+  const btnEntrar = document.getElementById("btnEntrar");
+  const msg = document.getElementById("msg");
+
+  function setMsg(text, ok = false){
+    msg.textContent = text || "";
+    msg.style.color = ok ? "#22c55e" : "#ef4444";
+  }
+
+  function slug(s) {
+    return (s || "")
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  }
+
+  btnEntrar.onclick = async () => {
+    const usuario = (usuarioSelect.value || "").trim();
+
+    if (!usuario) {
+      setMsg("Selecione um usuário.");
+      return;
+    }
+
+    btnEntrar.disabled = true;
+    btnEntrar.style.opacity = ".7";
+    setMsg("Entrando...", true);
+
+    try {
+      // ✅ Autenticação anônima opcional para garantir que as Firestore Rules funcionem se habilitado
+      try {
+        if (!auth.currentUser) {
+          await signInAnonymously(auth);
+        }
+      } catch (authError) {
+        console.warn("Aviso: Autenticação anônima falhou ou está desativada no console.", authError);
+      }
+
+      // Sessão padrão usada pela agenda
+      localStorage.setItem("user_session", JSON.stringify({
+        nome: usuario,
+        matricula: usuario,
+        perfil: "analista",
+        uid: auth.currentUser ? auth.currentUser.uid : null,
+        loginAt: Date.now()
+      }));
+
+      // Compatibilidade legada
+      localStorage.setItem("usuarioLogado", usuario);
+      localStorage.setItem("usuarioKey", slug(usuario));
+
+      // Log de acesso
+      const path = "acessos";
+      try {
+        await addDoc(collection(db, path), {
+          usuario,
+          origem: "index.html",
+          evento: "LOGIN_SEM_AUTH",
+          criadoEm: serverTimestamp(),
+          userAgent: navigator.userAgent || null
+        });
+      } catch (e) {
+        handleFirestoreError(e, OperationType.CREATE, path);
+      }
+
+      // ✅ CAMINHO CORRETO DO MENU
+      window.location.href = "html_menus/menu.html";
+
+    } catch (e) {
+      console.error(e);
+      setMsg("Erro ao entrar. " + (e.message.startsWith('{') ? "Erro de permissão" : "Verifique o Firebase."));
+      btnEntrar.disabled = false;
+      btnEntrar.style.opacity = "1";
+    }
+  };
+</script>
+
+<style>
+.center-wrapper{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.login-card{
+  width:360px;
+  padding:30px;
+  border-radius:20px;
+  background:rgba(23,25,29,.85);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 20px 40px rgba(0,0,0,.4);
+  text-align:center;
+}
+.logo-box{
+  width:70px;
+  height:70px;
+  margin:0 auto 20px auto;
+  border-radius:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  font-size:22px;
+  color:#fff;
+  background:linear-gradient(135deg,#d91b2e,#ff3b3b);
+}
+.form-group{
+  margin-top:20px;
+  text-align:left;
+}
+.form-group select{
+  width:100%;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.05);
+  color:#fff;
+  margin-top:6px;
+}
+.btn-primary{
+  width:100%;
+  margin-top:20px;
+  padding:12px;
+  border:none;
+  border-radius:14px;
+  font-weight:800;
+  background:linear-gradient(135deg,#d91b2e,#ff3b3b);
+  color:#fff;
+  cursor:pointer;
+}
+.msg{
+  margin-top:12px;
+  font-size:12px;
+}
+.hint{
+  font-size:13px;
+  opacity:.7;
+}
+</style>
+
+</body>
+</html>

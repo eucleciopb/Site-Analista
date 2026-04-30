@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Agenda do Dia | Admin</title>
+
+<style>
+  body{
+    margin:0;
+    background:#ffffff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:40px 20px;
+    color:#000;
+  }
+  .card{
+    width:100%;
+    max-width:1100px;
+    background:#fff;
+    border-radius:28px;
+    padding:30px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.08);
+  }
+  .header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+  }
+  .header h2{ margin:0; font-size:20px; }
+  small{ color:#666; display:block; margin-top:4px; }
+  hr{ margin:22px 0; border:none; height:1px; background:#eee; }
+
+  .kpis{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+  }
+  .kpi{
+    background:#f7f7f7;
+    border:1px solid #eee;
+    padding:12px 18px;
+    border-radius:18px;
+    font-weight:800;
+    font-size:13px;
+  }
+
+  .actions{ display:flex; gap:10px; flex-wrap:wrap; }
+  .btn{
+    padding:10px 16px;
+    border-radius:12px;
+    border:1px solid #ddd;
+    background:#fff;
+    cursor:pointer;
+    font-weight:800;
+    transition:.15s;
+  }
+  .btn:hover{ background:#000; color:#fff; border-color:#000; }
+
+  .error{
+    margin-top:10px;
+    font-size:13px;
+    font-weight:800;
+    color:#b00000;
+    display:none;
+  }
+  .hint{
+    margin-top:6px;
+    font-size:12px;
+    color:#666;
+    font-weight:700;
+  }
+
+  table{ width:100%; border-collapse:collapse; }
+  th, td{
+    padding:14px;
+    border-bottom:1px solid #eee;
+    text-align:left;
+    font-size:14px;
+  }
+  th{
+    font-size:12px;
+    text-transform:uppercase;
+    color:#777;
+    letter-spacing:.06em;
+  }
+  .ok{ color:#0a8f3c; font-weight:900; }
+  .pend{ color:#c00000; font-weight:900; }
+  .empty{ color:#999; font-style:italic; }
+
+  @media (max-width: 700px){
+    .header{ flex-direction:column; align-items:stretch; }
+    .actions{ justify-content:flex-start; }
+  }
+</style>
+</head>
+
+<body>
+  <div class="card">
+
+    <div class="header">
+      <div>
+        <h2>Agenda do Dia — Admin</h2>
+        <small id="todayLabel">Data: —</small>
+        <div class="hint" id="hint">Carregando…</div>
+        <div class="error" id="errorBox"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" id="btnReload">Atualizar</button>
+
+        <!-- ✅ caminho certo -->
+        <button class="btn" onclick="location.href='../html_menus/menuadm.html'">Voltar</button>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="kpis">
+      <div class="kpi">Total usuários: <span id="kpiUsers">0</span></div>
+      <div class="kpi">Lançaram hoje: <span id="kpiOk">0</span></div>
+      <div class="kpi">Pendentes: <span id="kpiPend">0</span></div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Usuário</th>
+          <th>Status</th>
+          <th>CD / Local</th>
+          <th>Atividade</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="4">Carregando…</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <!-- ✅ CAMINHO CERTO: sai de /html adm/ e vai para /js/ -->
+  <script type="module" src="../js/agenda-dia-adm.js"></script>
+</body>
+</html>

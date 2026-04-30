@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Agenda Mensal | Admin</title>
+<link rel="stylesheet" href="../css/styles.css" />
+
+<style>
+.topbar{
+  position:sticky; top:0; z-index:999;
+  backdrop-filter: blur(10px);
+  background: rgba(11,15,20,.82);
+  border-bottom:1px solid rgba(255,255,255,.08);
+  padding:12px 0;
+}
+.topbar-inner{
+  display:flex; justify-content:space-between;
+  align-items:flex-start; gap:14px; flex-wrap:wrap;
+}
+.topbar h2{ margin:0; font-size:18px; }
+
+.filters{
+  display:flex; gap:12px; flex-wrap:wrap;
+  margin-top:15px;
+}
+.filters > div{ min-width:220px; flex:1; }
+.field{
+  width:100%; padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.05);
+  color:#fff;
+}
+
+.table-wrap{
+  overflow:auto;
+  margin-top:20px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:1200px;
+}
+thead th{
+  background:rgba(0,0,0,.4);
+  padding:12px;
+  font-size:12px;
+  text-align:left;
+  color:#bbb;
+}
+tbody td{
+  padding:11px 12px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+tbody tr:hover{
+  background:rgba(255,255,255,.05);
+}
+
+.pill{
+  padding:6px 10px;
+  border-radius:999px;
+  font-weight:900;
+  font-size:12px;
+}
+.ok{
+  background:rgba(34,197,94,.12);
+  color:#22c55e;
+}
+.pend{
+  background:rgba(250,204,21,.12);
+  color:#facc15;
+}
+
+.btn-mini{
+  padding:8px 12px;
+  border-radius:12px;
+  border:none;
+  background:#d91b2e;
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+.btn-mini:hover{ filter:brightness(1.1); }
+
+</style>
+</head>
+
+<body class="bg">
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <h2>Agenda Mensal — Admin</h2>
+      <div id="userInfo" class="hint" style="margin-top:4px;"></div>
+    </div>
+    <div>
+      <button id="btnMenu" class="btn-secondary">Voltar ao Menu</button>
+      <button id="btnLogout" class="btn-secondary">Sair</button>
+    </div>
+  </div>
+</header>
+
+<main class="card wide">
+
+<section class="filters">
+  <div>
+    <label>Mês</label>
+    <input id="monthPicker" class="field" type="month">
+  </div>
+  <div>
+    <label>Buscar</label>
+    <input id="busca" class="field" type="text" placeholder="Analista ou CD">
+  </div>
+</section>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Data</th>
+<th>Dia</th>
+<th>Analista</th>
+<th>CD</th>
+<th>Atividade</th>
+<th>Obs</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody id="tbody">
+<tr><td colspan="7">Carregando…</td></tr>
+</tbody>
+</table>
+</div>
+
+</main>
+
+<script type="module">
+import { db } from "../js/firebase.js";
+import { collection, getDocs, query, where } from "firebase/firestore";
+
+const PATH_INDEX = "../index.html";
+const PATH_MENUADM = "../html_menus/menuadm.html";
+
+const user = localStorage.getItem("usuarioLogado");
+if(!user) window.location.href = PATH_INDEX;
+document.getElementById("userInfo").textContent = "Admin: " + user;
+
+document.getElementById("btnMenu").onclick = () => window.location.href = PATH_MENUADM;
+document.getElementById("btnLogout").onclick = () => {
+  localStorage.clear();
+  window.location.href = PATH_INDEX;
+};
+
+const monthPicker = document.getElementById("monthPicker");
+const busca = document.getElementById("busca");
+const tbody = document.getElementById("tbody");
+
+function pad2(n){ return String(n).padStart(2,"0"); }
+function toMonthKey(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
+function toBR(iso){
+  const [y,m,d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+function diaSemana(iso){
+  const [y,m,d] = iso.split("-");
+  const dt = new Date(y, m-1, d);
+  return ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"][dt.getDay()];
+}
+
+let CACHE = [];
+
+async function load(){
+  const yyyyMM = monthPicker.value;
+  const q = query(collection(db, "agenda_dias"), where("yyyyMM","==",yyyyMM));
+  const snap = await getDocs(q);
+
+  CACHE = [];
+  snap.forEach(doc=>{
+    CACHE.push({id:doc.id, ...doc.data()});
+  });
+
+  render();
+}
+
+function isFilled(x){
+  return x.cd || x.atividade || x.obs;
+}
+
+function render(){
+  let rows = CACHE.slice();
+
+  const txt = busca.value.toLowerCase();
+  if(txt){
+    rows = rows.filter(x =>
+      (x.usuarioNome || "").toLowerCase().includes(txt) ||
+      (x.cd || "").toLowerCase().includes(txt)
+    );
+  }
+
+  /* ✅ ORDENAR MAIS ANTIGO PRIMEIRO */
+  rows.sort((a,b)=>{
+    const da = Date.parse(a.data);
+    const db = Date.parse(b.data);
+    if(da !== db) return da - db; // ASC
+    return (a.usuarioNome || "").localeCompare(b.usuarioNome || "");
+  });
+
+  tbody.innerHTML = "";
+
+  if(rows.length===0){
+    tbody.innerHTML = `<tr><td colspan="7">Sem registros</td></tr>`;
+    return;
+  }
+
+  rows.forEach(x=>{
+    const status = isFilled(x)
+      ? `<span class="pill ok">Preenchido</span>`
+      : `<span class="pill pend">Não preenchido</span>`;
+
+    tbody.innerHTML += `
+    <tr>
+      <td>${toBR(x.data)}</td>
+      <td>${diaSemana(x.data)}</td>
+      <td>${x.usuarioNome || "-"}</td>
+      <td>${x.cd || "-"}</td>
+      <td>${x.atividade || "-"}</td>
+      <td>${x.obs || "-"}</td>
+      <td>${status}</td>
+    </tr>`;
+  });
+}
+
+(async () => {
+  monthPicker.value = toMonthKey(new Date());
+  await load();
+})();
+
+monthPicker.addEventListener("change", load);
+busca.addEventListener("input", render);
+
+</script>
+
+</body>
+</html>

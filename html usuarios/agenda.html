@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Agenda do Analista</title>
+
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --card:rgba(255,255,255,.06);
+      --border:rgba(255,255,255,.10);
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --danger:#ef4444;
+      --ok:#22c55e;
+      --field:rgba(0,0,0,.30);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto;background:var(--bg);color:var(--text)}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 22px}
+    .topbar h2{margin:0;font-size:18px}
+    .hint{color:var(--muted);font-size:12px;margin-top:4px}
+    .err{color:var(--danger);font-weight:900;font-size:12px;margin-top:6px;display:none;white-space:pre-wrap}
+    .wrap{max-width:1200px;margin:0 auto;padding:0 18px 30px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px}
+    .row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between}
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+    input[type="month"]{
+      padding:10px 12px;border-radius:12px;border:1px solid var(--border);
+      background:var(--field);color:var(--text)
+    }
+    .btn{border:1px solid var(--border);border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer;background:transparent;color:var(--text)}
+    .btn-primary{background:var(--danger);border-color:transparent}
+    .btn-primary:hover{filter:brightness(1.06)}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px;color:var(--muted)}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+    .cardsMini{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+    .mini{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:14px;padding:12px}
+    .mini .t{font-size:12px;color:var(--muted)}
+    .mini .v{margin-top:6px;font-size:18px;font-weight:1000}
+    .table-wrap{overflow:auto;margin-top:14px;border-radius:14px;border:1px solid var(--border)}
+    table{width:100%;border-collapse:collapse;min-width:980px;background:rgba(255,255,255,.03)}
+    thead th{position:sticky;top:0;background:rgba(0,0,0,.35);backdrop-filter:blur(8px);text-align:left;font-size:12px;color:var(--muted);padding:12px;border-bottom:1px solid var(--border)}
+    tbody td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:top}
+    tbody tr:hover{background:rgba(255,255,255,.04)}
+    .empty{padding:14px;text-align:center;color:var(--muted)}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;}
+    @media (max-width:720px){
+      .topbar{flex-direction:column;align-items:flex-start}
+      table{min-width:860px}
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div>
+      <h2>Agenda do Analista</h2>
+      <div class="hint" id="userInfo"></div>
+      <div class="err" id="errBox"></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" id="btnMenu" type="button">Voltar ao Menu</button>
+      <button class="btn" id="btnLogout" type="button">Sair</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <main class="card">
+      <div class="row">
+        <div>
+          <h3 style="margin:0 0 6px">Resumo do mês</h3>
+          <div class="hint">Mostra somente os dias preenchidos em <span class="mono">agenda_dias</span>.</div>
+        </div>
+        <div class="pill" id="statusPill"><span class="dot"></span> Status: aguardando</div>
+      </div>
+
+      <hr style="border:none;height:1px;background:rgba(255,255,255,.10);margin:16px 0">
+
+      <div class="row">
+        <div>
+          <label for="monthPicker">Mês</label>
+          <input id="monthPicker" type="month" />
+        </div>
+        <button class="btn btn-primary" id="btnRecarregar" type="button">Recarregar</button>
+      </div>
+
+      <div class="cardsMini" id="cardsMini"></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:140px;">Data</th>
+              <th style="width:110px;">Dia</th>
+              <th style="width:280px;">CD</th>
+              <th style="width:260px;">Atividade</th>
+              <th>Observações</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyAgenda">
+            <tr><td colspan="5" class="empty">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { db } from "../js/firebase.js";
+    import {
+      collection, getDocs, query, where
+    } from "firebase/firestore";
+
+    /* =========================
+       PATHS
+       (esta tela está em /html usuarios/)
+    ========================= */
+    const PATH_INDEX = "../index.html";
+    const PATH_MENU  = "../html menus/menu.html";
+
+    /* =========================
+       LOGIN PADRONIZADO
+    ========================= */
+    function safeParse(raw){
+      try { return JSON.parse(raw); } catch { return null; }
+    }
+    function slug(s) {
+      return (s || "")
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+    }
+    function getCurrentUserName(){
+      const raw = localStorage.getItem("user_session");
+      if(raw){
+        const s = safeParse(raw);
+        if(s?.nome) return String(s.nome).trim();
+      }
+      return (localStorage.getItem("usuarioLogado") || "").trim();
+    }
+
+    const usuarioNome = getCurrentUserName();
+    if(!usuarioNome) window.location.href = PATH_INDEX;
+
+    const usuarioKey = slug(usuarioNome);
+
+    /* =========================
+       UI
+    ========================= */
+    const $ = (id)=>document.getElementById(id);
+    const userInfo = $("userInfo");
+    const errBox = $("errBox");
+    const statusPill = $("statusPill");
+    const monthPicker = $("monthPicker");
+    const btnRecarregar = $("btnRecarregar");
+    const tbody = $("tbodyAgenda");
+    const cardsMini = $("cardsMini");
+
+    userInfo.textContent = `Usuário: ${usuarioNome} • uidKey: ${usuarioKey}`;
+
+    function showErr(text){
+      errBox.style.display = text ? "block" : "none";
+      errBox.textContent = text || "";
+    }
+    function setStatus(text){
+      statusPill.innerHTML = `<span class="dot"></span> Status: ${text}`;
+    }
+    function pad2(n){ return String(n).padStart(2,"0"); }
+    function toMonthKey(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
+    function weekdayShort(iso){
+      const d = new Date(iso + "T00:00:00");
+      return d.toLocaleDateString("pt-BR",{weekday:"short"});
+    }
+    function brFromIso(iso){
+      const d = new Date(iso + "T00:00:00");
+      return d.toLocaleDateString("pt-BR");
+    }
+
+    function renderSummary(items){
+      const dias = items.length;
+
+      const cds = new Set();
+      const atividadeCount = new Map();
+
+      for(const it of items){
+        if(it.cd) cds.add(it.cd);
+
+        const a = (it.atividade || "—").trim() || "—";
+        atividadeCount.set(a, (atividadeCount.get(a)||0) + 1);
+      }
+
+      let topAtv = "—";
+      let topQtd = 0;
+      for(const [k,v] of atividadeCount.entries()){
+        if(v > topQtd){ topQtd = v; topAtv = k; }
+      }
+
+      cardsMini.innerHTML = `
+        <div class="mini">
+          <div class="t">Dias preenchidos</div>
+          <div class="v">${dias}</div>
+        </div>
+        <div class="mini">
+          <div class="t">CDs no mês</div>
+          <div class="v">${cds.size}</div>
+        </div>
+        <div class="mini">
+          <div class="t">Atividade mais comum</div>
+          <div class="v" style="font-size:14px;line-height:1.2">${topAtv}</div>
+        </div>
+        <div class="mini">
+          <div class="t">Registros carregados</div>
+          <div class="v">${items.length}</div>
+        </div>
+      `;
+    }
+
+    function renderTable(items){
+      if(items.length === 0){
+        tbody.innerHTML = `<tr><td colspan="5" class="empty">Sem registros neste mês.</td></tr>`;
+        return;
+      }
+
+      const rows = items.map(it=>{
+        const iso = it.data || "";
+        return `
+          <tr>
+            <td class="mono">${iso ? brFromIso(iso) : "—"}</td>
+            <td>${iso ? weekdayShort(iso) : "—"}</td>
+            <td>${it.cd || "—"}</td>
+            <td>${it.atividade || "—"}</td>
+            <td>${it.obs || ""}</td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.innerHTML = rows;
+    }
+
+    async function loadMonth(yyyyMM){
+      try{
+        showErr("");
+        setStatus("carregando…");
+        tbody.innerHTML = `<tr><td colspan="5" class="empty">Carregando…</td></tr>`;
+        cardsMini.innerHTML = "";
+
+        // 1) Por uidKey (novo padrão / slug)
+        const q1 = query(
+          collection(db, "agenda_dias"),
+          where("uidKey", "==", usuarioKey),
+          where("yyyyMM", "==", yyyyMM)
+        );
+
+        // 2) Fallback por analyst / usuarioNome (nome exibido)
+        const q2 = query(
+          collection(db, "agenda_dias"),
+          where("analyst", "==", usuarioNome),
+          where("yyyyMM", "==", yyyyMM)
+        );
+
+        // 3) Fallback por usuarioNome (campo alternativo)
+        const q3 = query(
+          collection(db, "agenda_dias"),
+          where("usuarioNome", "==", usuarioNome),
+          where("yyyyMM", "==", yyyyMM)
+        );
+
+        const [s1, s2, s3] = await Promise.all([
+          getDocs(q1),
+          getDocs(q2),
+          getDocs(q3)
+        ]);
+
+        const rawItems = [];
+        [...s1.docs, ...s2.docs, ...s3.docs].forEach(d => {
+          const data = d.data();
+          if (data.dias && typeof data.dias === "object") {
+             // Estrutura Mensal: { dias: { "2026-02-19": { ... } } }
+             Object.entries(data.dias).forEach(([date, details]) => {
+               rawItems.push({ data: date, ...details });
+             });
+          } else {
+             // Estrutura Diária: { data: "2026-02-19", cd: "...", ... }
+             rawItems.push(data);
+          }
+        });
+
+        // Dedup por data
+        const map = new Map();
+        rawItems.forEach(item => {
+           if (item.data) map.set(item.data, item);
+        });
+
+        const items = Array.from(map.values());
+
+        // ordena por data ISO
+        items.sort((a,b)=> (a.data||"").localeCompare(b.data||""));
+
+        renderSummary(items);
+        renderTable(items);
+        setStatus(`ok • ${items.length} registro(s)`);
+
+      }catch(err){
+        console.error(err);
+        setStatus("erro");
+        showErr(err?.message || String(err));
+        tbody.innerHTML = `<tr><td colspan="5" class="empty">Erro ao carregar.</td></tr>`;
+      }
+    }
+
+    // NAV
+    document.getElementById("btnMenu").addEventListener("click", ()=> {
+      window.location.href = PATH_MENU;
+    });
+
+    document.getElementById("btnLogout").addEventListener("click", ()=> {
+      localStorage.removeItem("user_session");
+      localStorage.removeItem("usuarioLogado");
+      window.location.href = PATH_INDEX;
+    });
+
+    // INIT
+    const now = new Date();
+    monthPicker.value = toMonthKey(now);
+    loadMonth(monthPicker.value);
+
+    monthPicker.addEventListener("change", ()=> loadMonth(monthPicker.value));
+    btnRecarregar.addEventListener("click", ()=> loadMonth(monthPicker.value));
+  </script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Menu | Jornada</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+
+<body>
+
+  <main class="container">
+    <section class="card">
+
+      <div class="header">
+        <div class="logo">GP</div>
+        <div>
+          <h1 id="welcomeText">Carregando...</h1>
+          <p>Menu Principal</p>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="menu-buttons">
+
+        <button class="menu-btn" onclick="goTo('../html_usuarios/criar-agenda.html')">
+          Criar Agenda
+        </button>
+ 
+        <button class="menu-btn" onclick="goTo('../html_usuarios/agenda.html')">
+          Agenda
+        </button>
+ 
+        <button class="menu-btn" onclick="goTo('../html_usuarios/treinamentos.html')">
+          Treinamentos Realizados
+        </button>
+ 
+        <button class="menu-btn" onclick="goTo('../html_usuarios/resultados.html')">
+          Resultados dos Treinamentos
+        </button>
+ 
+        <button class="menu-btn" onclick="goTo('../html_usuarios/biblioteca-treinamentos.html')">
+          Biblioteca de Treinamentos
+        </button>
+
+      </div>
+
+      <div class="divider"></div>
+
+      <button id="btnLogout" class="btn-logout" type="button">
+        Sair
+      </button>
+
+    </section>
+  </main>
+
+  <script>
+    // =========================================================
+    // ✅ CHECK DE SESSÃO (aceita padrão novo e legado)
+    // - novo: user_session (JSON)
+    // - legado: usuarioLogado (string)
+    // =========================================================
+    const welcomeText = document.getElementById("welcomeText");
+    const btnLogout = document.getElementById("btnLogout");
+
+    function safeParse(raw){
+      try { return JSON.parse(raw); } catch { return null; }
+    }
+
+    function getCurrentUser(){
+      // 1) padrão novo
+      const rawSession = localStorage.getItem("user_session");
+      if (rawSession) {
+        const s = safeParse(rawSession);
+        if (s?.nome) return { nome: s.nome };
+      }
+
+      // 2) legado
+      const u = (localStorage.getItem("usuarioLogado") || "").trim();
+      if (u) return { nome: u };
+
+      return null;
+    }
+
+    const user = getCurrentUser();
+
+    if (!user) {
+      window.location.href = "../index.html";
+    } else {
+      welcomeText.textContent = `Olá, ${user.nome}`;
+    }
+
+    function goTo(page) {
+      window.location.href = page;
+    }
+
+    btnLogout.addEventListener("click", () => {
+      // limpa tudo
+      localStorage.removeItem("usuarioLogado");
+      localStorage.removeItem("user_session");
+      window.location.href = "../index.html";
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Resultados dos Treinamentos</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+
+  <style>
+    .table-wrap{ overflow:auto; }
+    .table{ min-width: 1350px; }
+
+    .kpis{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .kpi{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .kpi .label{ font-size:12px; opacity:.8; }
+    .kpi .value{ font-size:22px; font-weight:900; margin-top:6px; }
+    .kpi .sub{ font-size:12px; opacity:.75; margin-top:6px; line-height:1.35; }
+
+    .pill{
+      display:inline-flex;align-items:center;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.04);
+      font-weight:900;font-size:12px;white-space:nowrap;
+    }
+    .pill-ok{ color:#22c55e; border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); }
+    .pill-bad{ color:#ef4444; border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.10); }
+    .pill-warn{ color:#facc15; border-color: rgba(250,204,21,.35); background: rgba(250,204,21,.10); }
+    .pill-muted{ opacity:.9; }
+
+    .row-good{ background: rgba(34,197,94,.07) !important; }
+    .row-bad{ background: rgba(239,68,68,.07) !important; }
+    .row-late{ background: rgba(245,158,11,.08) !important; }
+
+    /* Anti-loop: tela de sessão expirada */
+    .blocker{
+      position:fixed; inset:0; z-index:9999;
+      background: rgba(0,0,0,.70);
+      display:none; align-items:center; justify-content:center;
+      padding: 18px;
+    }
+    .blocker .card{
+      width:min(520px, 100%);
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(17,24,39,.96);
+      box-shadow:0 24px 60px rgba(0,0,0,.55);
+      padding:16px;
+    }
+    .blocker .card h3{ margin:0 0 8px; }
+    .blocker .card p{ margin:0 0 12px; opacity:.85; }
+    .blocker .actions{ display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; }
+    .btn{
+      padding: 10px 12px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.95);
+      font-weight: 900;
+      cursor:pointer;
+    }
+    .btn.primary{ border-color: transparent; background: rgba(217,27,46,.95); }
+    .btn:hover{ filter:brightness(1.08); }
+
+    @media (max-width: 920px){
+      .kpis{ grid-template-columns: repeat(2, minmax(160px, 1fr)); }
+      .table{ min-width: 1100px; }
+    }
+  </style>
+</head>
+
+<body class="bg">
+
+  <!-- Bloqueio de sessão (não redireciona em loop) -->
+  <div id="blocker" class="blocker">
+    <div class="card">
+      <h3>Sessão expirada</h3>
+      <p>Não encontrei o usuário logado no navegador. Volte para o Index e entre novamente.</p>
+      <div class="actions">
+        <button id="btnIrIndex" class="btn primary" type="button">Ir para o Index</button>
+      </div>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div>
+      <h2>Resultados dos Treinamentos</h2>
+      <div id="userInfo" class="hint" style="color:#d1d5db;margin-top:4px;"></div>
+      <div class="hint" style="opacity:.85;">Resumo do que você realizou e do que já foi validado.</div>
+    </div>
+
+    <div class="top-actions">
+      <button id="btnMenu" class="btn-secondary" type="button">Voltar ao Menu</button>
+      <button id="btnLogout" class="btn-secondary" type="button">Sair</button>
+    </div>
+  </header>
+
+  <main class="card wide">
+    <section class="row-between" style="align-items:flex-end;">
+      <div>
+        <h3>Resumo</h3>
+        <p class="hint">Status: <b>Validado</b>, <b>Pendente</b> ou <b>Atrasado</b>. Meta: Atingiu / Não atingiu / Pendente.</p>
+      </div>
+
+      <div style="min-width:260px;">
+        <label for="monthPicker">Mês</label>
+        <input id="monthPicker" type="month" />
+      </div>
+    </section>
+
+    <div class="kpis">
+      <div class="kpi">
+        <div class="label">Total no mês</div>
+        <div class="value" id="kTotal">-</div>
+        <div class="sub">Treinamentos registrados por você</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Validados</div>
+        <div class="value" id="kValidados">-</div>
+        <div class="sub">Avaliador concluiu (atingiu ou não)</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Pendentes</div>
+        <div class="value" id="kPendentes">-</div>
+        <div class="sub">Ainda não validados e dentro do prazo</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Atrasados</div>
+        <div class="value" id="kAtrasados">-</div>
+        <div class="sub">Pendentes e prazo já passou</div>
+      </div>
+    </div>
+
+    <p id="msg" class="msg"></p>
+
+    <hr class="sep" />
+
+    <section class="row-between" style="align-items:flex-end;">
+      <div style="flex:1; min-width:260px;">
+        <label for="busca">Buscar</label>
+        <input id="busca" type="text" placeholder="Treinamento, CD, desafio..." />
+      </div>
+
+      <div style="min-width:240px;">
+        <label for="fStatus">Status</label>
+        <select id="fStatus">
+          <option value="">Todos</option>
+          <option value="validado">Validado</option>
+          <option value="pendente">Pendente</option>
+          <option value="atrasado">Atrasado</option>
+        </select>
+      </div>
+
+      <div style="min-width:240px;">
+        <label for="fMeta">Meta</label>
+        <select id="fMeta">
+          <option value="">Todas</option>
+          <option value="atingiu">Atingiu</option>
+          <option value="nao_atingiu">Não atingiu</option>
+          <option value="pendente">Pendente</option>
+        </select>
+      </div>
+    </section>
+
+    <div class="table-wrap" style="margin-top:12px;">
+      <table class="table table-sticky">
+        <thead>
+          <tr>
+            <th style="width:120px;">Data</th>
+            <th style="width:260px;">Treinamento</th>
+            <th style="width:240px;">CD</th>
+            <th style="width:160px;">Prazo Apuração</th>
+            <th style="width:160px;">Status</th>
+            <th style="width:190px;">Meta (Atingiu?)</th>
+            <th style="width:180px;">Apurado em</th>
+            <th style="width:200px;">Avaliador</th>
+            <th>Comentário</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="9" style="opacity:.8;">Carregando…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script type="module">
+    import { db } from "../js/firebase.js";
+    import { collection, getDocs, query, where } from "firebase/firestore";
+
+    const TREINOS_COLLECTION = "treinamentos_realizados";
+    const APURACOES_COLLECTION = "apuracoes_treinamentos";
+
+    // caminhos (arquivo está em /html usuarios/)
+    const PATH_INDEX = "../index.html";
+    const PATH_MENU  = "../html_menus/menu.html";
+
+    const blocker = document.getElementById("blocker");
+    document.getElementById("btnIrIndex").onclick = () => window.location.href = PATH_INDEX;
+
+    function safeParse(raw){ try { return JSON.parse(raw); } catch { return null; } }
+
+    // ✅ pega usuário de 2 jeitos (evita “abre e fecha”)
+    function getUserName(){
+      const u1 = (localStorage.getItem("usuarioLogado") || "").trim();
+      if (u1) return u1;
+
+      const raw = localStorage.getItem("user_session");
+      const s = raw ? safeParse(raw) : null;
+      const u2 = (s?.nome || "").toString().trim();
+      return u2;
+    }
+
+    const usuarioNome = getUserName();
+
+    // Anti-loop: não redireciona correndo
+    if (!usuarioNome){
+      blocker.style.display = "flex";
+      throw new Error("Sem sessão (usuarioLogado/user_session).");
+    }
+
+    // usuarioKey estável (sem Auth)
+    const usuarioKey = (localStorage.getItem("usuarioKey") || slug(usuarioNome)).trim();
+    localStorage.setItem("usuarioKey", usuarioKey);
+
+    document.getElementById("userInfo").textContent = `Usuário: ${usuarioNome}`;
+
+    document.getElementById("btnMenu").onclick = () => window.location.href = PATH_MENU;
+    document.getElementById("btnLogout").onclick = () => {
+      localStorage.removeItem("usuarioLogado");
+      localStorage.removeItem("usuarioKey");
+      localStorage.removeItem("user_session");
+      window.location.href = PATH_INDEX;
+    };
+
+    const monthPicker = document.getElementById("monthPicker");
+    const busca = document.getElementById("busca");
+    const fStatus = document.getElementById("fStatus");
+    const fMeta = document.getElementById("fMeta");
+    const tbody = document.getElementById("tbody");
+    const msg = document.getElementById("msg");
+
+    const kTotal = document.getElementById("kTotal");
+    const kValidados = document.getElementById("kValidados");
+    const kPendentes = document.getElementById("kPendentes");
+    const kAtrasados = document.getElementById("kAtrasados");
+
+    function setMsg(text, type="info"){
+      msg.textContent = text || "";
+      msg.style.color = type === "success" ? "#22c55e" : (type === "error" ? "#ef4444" : "#d1d5db");
+    }
+
+    function pad2(n){ return String(n).padStart(2,"0"); }
+    function toMonthKey(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
+
+    function toBR(iso){
+      if (!iso) return "-";
+      const [y,m,d] = String(iso).split("-");
+      if (!y || !m || !d) return String(iso);
+      return `${d}/${m}/${y}`;
+    }
+
+    function todayISO(){
+      const d = new Date();
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    }
+
+    function normalize(s){ return (s || "").replace(/\s+/g," ").trim(); }
+
+    function slug(s) {
+      return (s || "")
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+    }
+
+    function isLate(dataApuracao){
+      if (!dataApuracao) return false;
+      return todayISO() > String(dataApuracao);
+    }
+
+    // STATUS: 3 estados
+    function computeStatusTabela(dataApuracao, metaAtingida){
+      const m = metaAtingida || "pendente";
+      if (m !== "pendente") return { key:"validado", label:"Validado", pill:"pill pill-ok" };
+      if (isLate(dataApuracao)) return { key:"atrasado", label:"Atrasado", pill:"pill pill-bad" };
+      return { key:"pendente", label:"Pendente", pill:"pill pill-warn" };
+    }
+
+    function computeMetaPill(metaAtingida){
+      const m = metaAtingida || "pendente";
+      if (m === "atingiu") return { key:m, label:"Atingiu", pill:"pill pill-ok" };
+      if (m === "nao_atingiu") return { key:m, label:"Não atingiu", pill:"pill pill-bad" };
+      return { key:"pendente", label:"Pendente", pill:"pill pill-muted" };
+    }
+
+    let TREINOS_CACHE = [];
+    let APUR_MAP = {};
+
+    async function loadTreinosMes(yyyyMM){
+      // 1) Query by uidKey
+      const q1 = query(
+        collection(db, TREINOS_COLLECTION),
+        where("uidKey", "==", usuarioKey)
+      );
+      const s1 = await getDocs(q1);
+      const a1 = s1.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // 2) Query by usuarioNome (case sensitive name fallback)
+      let a2 = [];
+      if(usuarioNome){
+        const q2 = query(
+          collection(db, TREINOS_COLLECTION),
+          where("usuarioNome", "==", usuarioNome)
+        );
+        const s2 = await getDocs(q2);
+        a2 = s2.docs.map(d => ({ id: d.id, ...d.data() }));
+      }
+
+      // Merge
+      const map = new Map();
+      [...a1, ...a2].forEach(x => map.set(x.id, x));
+      const all = Array.from(map.values());
+
+      TREINOS_CACHE = all.filter(t => String(t.data || "").slice(0,7) === yyyyMM);
+
+      // apurações: docId = id do treino
+      const snapAp = await getDocs(collection(db, APURACOES_COLLECTION));
+      const apMap = {};
+      snapAp.forEach(d => apMap[d.id] = (d.data() || {}));
+      APUR_MAP = apMap;
+    }
+
+    function calcKPIs(rows){
+      const total = rows.length;
+      let validados = 0, pendentes = 0, atrasados = 0;
+
+      for (const r of rows){
+        if (r.status.key === "validado") validados++;
+        else if (r.status.key === "atrasado") atrasados++;
+        else pendentes++;
+      }
+
+      kTotal.textContent = String(total);
+      kValidados.textContent = String(validados);
+      kPendentes.textContent = String(pendentes);
+      kAtrasados.textContent = String(atrasados);
+    }
+
+    function render(){
+      const q = (busca.value || "").toLowerCase();
+      const stFilter = fStatus.value;
+      const metaFilter = fMeta.value;
+
+      let rows = (TREINOS_CACHE || []).map(t => {
+        const ap = APUR_MAP[t.id] || {};
+        const metaAtingida = ap.metaAtingida || "pendente";
+        const status = computeStatusTabela(t.dataApuracao, metaAtingida);
+        const meta = computeMetaPill(metaAtingida);
+        return { t, ap, status, meta };
+      });
+
+      if (q){
+        rows = rows.filter(({t}) => {
+          const blob = [t.treinamento, t.cd, t.desafio, t.meta, t.obs].join(" ").toLowerCase();
+          return blob.includes(q);
+        });
+      }
+
+      if (stFilter) rows = rows.filter(r => r.status.key === stFilter);
+      if (metaFilter) rows = rows.filter(r => r.meta.key === metaFilter);
+
+      rows.sort((a,b) => String(b.t.data || "").localeCompare(String(a.t.data || "")));
+
+      calcKPIs(rows);
+
+      tbody.innerHTML = "";
+      if (rows.length === 0){
+        tbody.innerHTML = `<tr><td colspan="9" style="opacity:.8;">Sem registros para este mês/filtros.</td></tr>`;
+        return;
+      }
+
+      for (const r of rows){
+        const { t, ap, status, meta } = r;
+
+        const tr = document.createElement("tr");
+        if (status.key === "atrasado") tr.classList.add("row-late");
+        if (meta.key === "atingiu") tr.classList.add("row-good");
+        if (meta.key === "nao_atingiu") tr.classList.add("row-bad");
+
+        tr.innerHTML = `
+          <td>${toBR(t.data)}</td>
+          <td>${t.treinamento || "-"}</td>
+          <td>${t.cd || "-"}</td>
+          <td>${t.dataApuracao ? toBR(t.dataApuracao) : "-"}</td>
+          <td><span class="${status.pill}">${status.label}</span></td>
+          <td><span class="${meta.pill}">${meta.label}</span></td>
+          <td>${ap.dataApurada ? toBR(ap.dataApurada) : "-"}</td>
+          <td>${ap.avaliador || "-"}</td>
+          <td>${ap.comentario || "-"}</td>
+        `;
+
+        tbody.appendChild(tr);
+      }
+    }
+
+    monthPicker.value = toMonthKey(new Date());
+
+    async function reload(){
+      try{
+        setMsg("Carregando do Firebase…");
+        await loadTreinosMes(monthPicker.value);
+        setMsg("");
+        render();
+      }catch(e){
+        console.error(e);
+        setMsg("Erro ao carregar do Firebase (Rules/Conexão).", "error");
+        tbody.innerHTML = `<tr><td colspan="9" style="opacity:.8;">Falha ao carregar.</td></tr>`;
+      }
+    }
+
+    monthPicker.addEventListener("change", reload);
+    busca.addEventListener("input", render);
+    fStatus.addEventListener("change", render);
+    fMeta.addEventListener("change", render);
+
+    await reload();
+  </script>
+</body>
+</html>

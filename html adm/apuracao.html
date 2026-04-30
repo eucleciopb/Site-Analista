@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Apuração de Treinamentos</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+
+  <style>
+    /* ===== Topbar sticky (fixo em cima) ===== */
+    .topbar{
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      backdrop-filter: blur(10px);
+      background: rgba(11,15,20,.72);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      transition: padding .18s ease, background .18s ease, box-shadow .18s ease;
+      padding: 14px 0;
+    }
+
+    .topbar-inner{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+
+    .topbar-left h2{
+      margin:0;
+      font-size:18px;
+      line-height:1.15;
+      transition: font-size .18s ease, transform .18s ease;
+    }
+
+    .topbar-left .hint{
+      margin-top:4px;
+      font-size:12px;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .top-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+      transition: transform .18s ease;
+    }
+
+    /* ===== Compact mode (scroll) ===== */
+    .topbar.compact{
+      padding: 8px 0;
+      background: rgba(11,15,20,.86);
+      box-shadow: 0 10px 30px rgba(0,0,0,.28);
+    }
+    .topbar.compact .topbar-left h2{
+      font-size:15px;
+      transform: translateY(1px);
+    }
+    .topbar.compact .topbar-left .hint{
+      opacity:.85;
+      transform: translateY(-1px);
+    }
+    .topbar.compact .top-actions{
+      transform: translateY(1px);
+    }
+
+    @media (max-width: 840px){
+      .top-actions{ justify-content:flex-start; }
+    }
+
+    .table-wrap{ overflow:auto; }
+    .table{ min-width: 1200px; }
+
+    .status-pill{
+      display:inline-flex;
+      align-items:center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      font-weight: 900;
+      font-size: 12px;
+      white-space:nowrap;
+    }
+    .status-validado{ color:#22c55e; border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); }
+    .status-atrasado{ color:#ef4444; border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.10); }
+    .status-pendente{ color:#facc15; border-color: rgba(250,204,21,.35); background: rgba(250,204,21,.10); }
+
+    .btn-mini{
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.95);
+      font-weight: 900;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .btn-mini.primary{
+      border-color: transparent;
+      background: rgba(217,27,46,.95);
+    }
+    .btn-mini:hover{ filter: brightness(1.08); }
+
+    /* ===== Modal ===== */
+    .modal-backdrop{
+      position:fixed; inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      background: rgba(0,0,0,.60);
+      z-index: 9999;
+    }
+    .modal{
+      width: min(920px, 100%);
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(17,24,39,.96);
+      box-shadow: 0 24px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .modal-header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .modal-header h3{ margin:0; font-size: 16px; }
+    .modal-header .sub{
+      margin-top:6px;
+      font-size: 12px;
+      opacity:.85;
+      line-height: 1.35;
+    }
+    .modal-close{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.9);
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor:pointer;
+      font-weight: 900;
+    }
+    .modal-body{
+      padding: 14px 16px 16px 16px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .box{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .box label{
+      display:block;
+      font-size: 12px;
+      opacity:.75;
+      margin-bottom: 6px;
+    }
+    .box .val{
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.35;
+      white-space: pre-wrap;
+    }
+    .field{
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.95);
+      outline:none;
+    }
+    .field:focus{
+      border-color: rgba(255,59,59,.55);
+      box-shadow: 0 0 0 4px rgba(217,27,46,.18);
+    }
+    .modal-actions{
+      display:flex;
+      gap: 10px;
+      justify-content:flex-end;
+      padding: 12px 16px 16px 16px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      flex-wrap: wrap;
+    }
+    .btn-state{
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.95);
+      font-weight: 900;
+      cursor:pointer;
+    }
+    .btn-state.ok{ border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.12); }
+    .btn-state.bad{ border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.12); }
+    .btn-state.muted{ border-color: rgba(255,255,255,.12); background: rgba(255,255,255,.03); }
+
+    @media (max-width: 840px){
+      .modal-body{ grid-template-columns: 1fr; }
+      .table{ min-width: 980px; }
+    }
+  </style>
+</head>
+
+<body class="bg">
+
+<!-- ✅ TOPO FIXO (COMPACTA AO ROLAR) -->
+<header class="topbar" id="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-left">
+      <h2>Apuração de Treinamentos</h2>
+      <div id="userInfo" class="hint" style="color:#d1d5db;"></div>
+    </div>
+
+    <div class="top-actions">
+      <button id="btnMenu" class="btn-secondary" type="button">Voltar ao Menu</button>
+      <button id="btnLogout" class="btn-secondary" type="button">Sair</button>
+    </div>
+  </div>
+</header>
+
+<main class="card wide">
+  <section class="row-between" style="align-items:flex-end;">
+    <div>
+      <h3>Resumo para Apuração</h3>
+      <p class="hint">Status na tabela: <b>Validado</b>, <b>Atrasado</b> ou <b>Pendente</b>. Clique em <b>Validar</b> para marcar se atingiu a meta ou não.</p>
+    </div>
+
+    <div style="min-width:260px;">
+      <label for="monthPicker">Mês</label>
+      <input id="monthPicker" type="month" />
+    </div>
+  </section>
+
+  <p id="msg" class="msg"></p>
+
+  <hr class="sep" />
+
+  <section class="row-between" style="align-items:flex-end;">
+    <div style="flex:1; min-width:260px;">
+      <label for="busca">Buscar</label>
+      <input id="busca" type="text" placeholder="Usuário, treinamento, CD..." />
+    </div>
+
+    <div style="min-width:220px;">
+      <label for="fPublico">Público</label>
+      <select id="fPublico">
+        <option value="">Todos</option>
+        <option value="Gestor">Gestor</option>
+        <option value="Vendedor">Vendedor</option>
+      </select>
+    </div>
+
+    <div style="min-width:260px;">
+      <label for="fCd">CD</label>
+      <input id="fCd" type="text" list="cdList" placeholder="Filtrar por CD..." />
+      <datalist id="cdList"></datalist>
+    </div>
+
+    <div style="min-width:240px;">
+      <label for="fStatus">Status</label>
+      <select id="fStatus">
+        <option value="">Todos</option>
+        <option value="validado">Validado</option>
+        <option value="atrasado">Atrasado</option>
+        <option value="pendente">Pendente</option>
+      </select>
+    </div>
+  </section>
+
+  <div class="table-wrap" style="margin-top:12px;">
+    <table class="table table-sticky">
+      <thead>
+        <tr>
+          <th style="width:160px;">Usuário</th>
+          <th style="width:120px;">Data</th>
+          <th style="width:260px;">CD</th>
+          <th>Treinamento</th>
+          <th style="width:160px;">Prazo Apuração</th>
+          <th style="width:160px;">Status</th>
+          <th style="width:140px;">Ação</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="7" style="opacity:.8;">Carregando…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<!-- ===== MODAL VALIDAR ===== -->
+<div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3 id="mTitle">Validar Meta</h3>
+        <div class="sub" id="mSub"></div>
+      </div>
+      <button class="modal-close" id="mClose" type="button">Fechar</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="box">
+        <label>Desafio</label>
+        <div class="val" id="mDesafio">-</div>
+      </div>
+
+      <div class="box">
+        <label>Meta</label>
+        <div class="val" id="mMeta">-</div>
+      </div>
+
+      <div class="box">
+        <label>Data limite apuração</label>
+        <div class="val" id="mPrazoData">-</div>
+      </div>
+
+      <div class="box">
+        <label>Em dia ou atrasado?</label>
+        <div class="val" id="mPrazoStatus">-</div>
+      </div>
+
+      <div class="box" style="grid-column: 1 / -1;">
+        <label>Comentário do avaliador</label>
+        <input id="mComentario" class="field" maxlength="140" placeholder="Ex.: Evidência confirmada no painel/rota..." />
+      </div>
+
+      <div class="box" style="grid-column: 1 / -1;">
+        <label>Data em que foi apurado (opcional)</label>
+        <input id="mDataApurada" class="field" type="date" />
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-state muted" id="btnPendente" type="button">Pendente</button>
+      <button class="btn-state bad" id="btnNaoAtingiu" type="button">Não atingiu a meta</button>
+      <button class="btn-state ok" id="btnAtingiu" type="button">Atingiu a meta</button>
+      <button class="btn-mini primary" id="btnSalvarModal" type="button">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { db } from "../js/firebase.js";
+  import {
+    collection,
+    getDocs,
+    doc,
+    setDoc,
+    serverTimestamp
+  } from "firebase/firestore";
+
+  /* =========================
+     TOPBAR COMPACT ON SCROLL
+  ========================= */
+  const topbar = document.getElementById("topbar");
+  const COMPACT_AT = 24; // px
+  function updateTopbar(){
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    if (y > COMPACT_AT) topbar.classList.add("compact");
+    else topbar.classList.remove("compact");
+  }
+  window.addEventListener("scroll", updateTopbar, { passive:true });
+  updateTopbar();
+
+  /* =========================
+     COLEÇÕES
+  ========================= */
+  const TREINOS_COLLECTION = "treinamentos_realizados";
+  const APURACOES_COLLECTION = "apuracoes_treinamentos";
+
+  /* =========================
+     PATHS (arquivo em /html adm/)
+     ✅ MENU ADMIN
+  ========================= */
+  const PATH_INDEX = "../index.html";
+  const PATH_MENUADM = "../html menus/menuadm.html";
+
+  /* =========================
+     SESSÃO
+  ========================= */
+  function safeParse(raw){ try { return JSON.parse(raw); } catch { return null; } }
+  function getCurrentUserName(){
+    const raw = localStorage.getItem("user_session");
+    if(raw){
+      const s = safeParse(raw);
+      if(s?.nome) return String(s.nome).trim();
+    }
+    return (localStorage.getItem("usuarioLogado") || "").trim();
+  }
+
+  const avaliador = getCurrentUserName();
+  if (!avaliador) window.location.href = PATH_INDEX;
+
+  document.getElementById("userInfo").textContent = `Avaliador: ${avaliador}`;
+
+  // ✅ Voltar ao Menu -> menuadm.html
+  document.getElementById("btnMenu").onclick = () => window.location.href = PATH_MENUADM;
+
+  document.getElementById("btnLogout").onclick = () => {
+    localStorage.removeItem("user_session");
+    localStorage.removeItem("usuarioLogado");
+    window.location.href = PATH_INDEX;
+  };
+
+  /* =========================
+     UI
+  ========================= */
+  const monthPicker = document.getElementById("monthPicker");
+  const busca = document.getElementById("busca");
+  const fPublico = document.getElementById("fPublico");
+  const fCd = document.getElementById("fCd");
+  const fStatus = document.getElementById("fStatus");
+  const tbody = document.getElementById("tbody");
+  const msg = document.getElementById("msg");
+  const cdList = document.getElementById("cdList");
+
+  /* Modal */
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const mClose = document.getElementById("mClose");
+  const mTitle = document.getElementById("mTitle");
+  const mSub = document.getElementById("mSub");
+  const mDesafio = document.getElementById("mDesafio");
+  const mMeta = document.getElementById("mMeta");
+  const mPrazoData = document.getElementById("mPrazoData");
+  const mPrazoStatus = document.getElementById("mPrazoStatus");
+  const mComentario = document.getElementById("mComentario");
+  const mDataApurada = document.getElementById("mDataApurada");
+
+  const btnPendente = document.getElementById("btnPendente");
+  const btnNaoAtingiu = document.getElementById("btnNaoAtingiu");
+  const btnAtingiu = document.getElementById("btnAtingiu");
+  const btnSalvarModal = document.getElementById("btnSalvarModal");
+
+  function setMsg(text, type="info"){
+    msg.textContent = text || "";
+    msg.style.color = type === "success" ? "#22c55e" : (type === "error" ? "#ef4444" : "#d1d5db");
+  }
+
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function toMonthKey(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
+  function normalize(s){ return (s || "").replace(/\s+/g," ").trim(); }
+
+  function toBR(iso){
+    if (!iso) return "-";
+    const [y,m,d] = String(iso).split("-");
+    if (!y || !m || !d) return String(iso);
+    return `${d}/${m}/${y}`;
+  }
+
+  function todayISO(){
+    const d = new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  }
+
+  function isLate(dataApuracao){
+    if (!dataApuracao) return false;
+    return todayISO() > String(dataApuracao);
+  }
+
+  function computeStatusTabela(dataApuracao, metaAtingida){
+    const m = metaAtingida || "pendente";
+    if (m !== "pendente") return { key:"validado", label:"Validado", cls:"status-validado" };
+    if (isLate(dataApuracao)) return { key:"atrasado", label:"Atrasado", cls:"status-atrasado" };
+    return { key:"pendente", label:"Pendente", cls:"status-pendente" };
+  }
+
+  /* =========================
+     CDs (filtro)
+  ========================= */
+  const CDS_RAW = [
+    "CD - Alagoinhas","CD - Andradina","CD - Angra dos Reis","CD - Aparecida de Goiânia","CD - Araçatuba","CD - Arapiraca","CD - Araraquara",
+    "CD - Balsas","CD - Barbalha","CD - Barra do Garca","CD - Barreiras","CD - Barretos","CD - Barueri","CD - Bauru","CD - Belém","CD - Boituva",
+    "CD - Bom Jesus da Lapa","CD - Brumado","CD - Cachoeiro de Itapemirim","CD - Camaçari","CD - Campina Grande","CD - Campinas","CD - Campo Grande MS",
+    "CD - Campo Grande RJ","CD - Campos dos Goytacazes","CD - Caraguatatuba","CD - Cariacica","CD - Carpina","CD - Caruaru","CD - Cascavel","CD - Catanduva",
+    "CD - Caucaia","CD - Caxias","CD - Coimbra","CD - Conde","CD - Conselheiro Lafaiete","CD - Contagem","CD - Coxim","CD - Cuiabá",
+    "CD - Divinópolis","CD - Dourados","CD - Duque de Caxias","CD - Eunápolis","CD - Eusebio","CD - Feira de Santana",
+    "CD - Fernandópolis","CD - Floriano","CD - Garanhuns","CD - Governador Valadares","CD - Guarujá",
+    "CD - Guarulhos Taboão","CD - Iguatu","CD - Imperatriz","CD - Interlagos","CD - Iporá","CD - Irece","CD - Itabaiana","CD - Itaberaba","CD - Itabuna",
+    "CD - Itapeva","CD - Itapissuma","CD - Itumbiara","CD - Jaboatão dos Guararapes","CD - Jacobina","CD - Jaguaré","CD - Jequié","CD - Juazeiro","CD - Juiz de Fora",
+    "CD - Jundiaí","CD - Londrina","CD - Macaiba","CD - Maceió","CD - Marília","CD - Mogi-Mirim","CD - Montes Claros","CD - Mossoró","CD - Muriaé",
+    "CD - Nossa Senhora do Socorro","CD - Nova Friburgo","CD - Palhoça","CD - Paranaíba","CD - Parnaiba","CD - Passos","CD - Patos",
+    "CD - Paulo Afonso","CD - Petrolina","CD - Petrópolis","CD - Picos","CD - Piracicaba","CD - Poços de Caldas","CD - Porto Velho",
+    "CD - Pouso Alegre","CD - Presidente Prudente","CD - Recife","CD - Registro","CD - Ribeirão Preto","CD - Rio Branco","CD - Rio das Ostras","CD - Rio Verde",
+    "CD - Rondonópolis","CD - Salto","CD - Salvador","CD - Salvador Leste","CD - Santa Inês","CD - Santo Antonio de Jesus","CD - São Bernardo","CD - São Cristovão",
+    "CD - São Gonçalo","CD - São João de Meriti","CD - São José do Rio Preto","CD - São José dos Campos","CD - São José dos Pinhais","CD - São Luis","CD - São Mateus",
+    "CD - São Pedro da Aldeia","CD - Sapucaia do Sul","CD - Serra Talhada","CD - Serrinha","CD - Sete Lagoas","CD - Sinop","CD - Sobral","CD - Sousa",
+    "CD - Taboão da Serra","CD - Taguatinga","CD - Taubaté","CD - Teixeira de Freitas","CD - Teresina","CD - Três Lagoas","CD - Uberaba","CD - Varginha",
+    "CD - Vila Guilherme","CD - Vitória da Conquista","CD - Volta Redonda"
+  ];
+  const CDS = Array.from(new Set(CDS_RAW.map(normalize))).filter(Boolean).sort((a,b)=>a.localeCompare(b,"pt-BR"));
+  cdList.innerHTML = CDS.map(cd => `<option value="${cd}"></option>`).join("");
+
+  /* =========================
+     CACHE
+  ========================= */
+  let TREINOS_CACHE = [];
+  let APURACOES_MAP = {};
+
+  async function loadTreinos(){
+    const snap = await getDocs(collection(db, TREINOS_COLLECTION));
+    const arr = [];
+    snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+    TREINOS_CACHE = arr;
+    return arr;
+  }
+
+  async function loadApuracoes(){
+    const snap = await getDocs(collection(db, APURACOES_COLLECTION));
+    const map = {};
+    snap.forEach(d => map[d.id] = (d.data() || {}));
+    APURACOES_MAP = map;
+    return map;
+  }
+
+  /* =========================
+     MODAL STATE
+  ========================= */
+  let CURRENT_T = null;
+  let CURRENT_META = "pendente";
+
+  function openModal(t){
+    CURRENT_T = t;
+
+    const ap = APURACOES_MAP[t.id] || {};
+    CURRENT_META = ap.metaAtingida || "pendente";
+
+    const usuarioNome = t.usuarioNome || "-";
+    const treino = t.treinamento || "-";
+    const cd = t.cd || "-";
+    const dataTreino = toBR(t.data);
+
+    mTitle.textContent = "Validar se Atingiu a Meta";
+    mSub.textContent = `${usuarioNome} • ${dataTreino} • ${cd} • ${treino}`;
+
+    mDesafio.textContent = t.desafio || "-";
+    mMeta.textContent = t.meta || "-";
+
+    const prazo = t.dataApuracao || "";
+    mPrazoData.textContent = prazo ? `${toBR(prazo)} (${prazo})` : "Sem data";
+    mPrazoStatus.innerHTML = isLate(prazo)
+      ? `<span class="status-pill status-atrasado">Atrasado</span>`
+      : `<span class="status-pill status-validado" style="opacity:.85;">Em dia</span>`;
+
+    mComentario.value = ap.comentario || "";
+    mDataApurada.value = ap.dataApurada || "";
+
+    modalBackdrop.style.display = "flex";
+  }
+
+  function closeModal(){
+    modalBackdrop.style.display = "none";
+    CURRENT_T = null;
+    CURRENT_META = "pendente";
+  }
+
+  mClose.addEventListener("click", closeModal);
+  modalBackdrop.addEventListener("click", (e) => {
+    if (e.target === modalBackdrop) closeModal();
+  });
+
+  btnPendente.addEventListener("click", () => CURRENT_META = "pendente");
+  btnNaoAtingiu.addEventListener("click", () => CURRENT_META = "nao_atingiu");
+  btnAtingiu.addEventListener("click", () => CURRENT_META = "atingiu");
+
+  async function saveModal(){
+    if (!CURRENT_T?.id) return;
+
+    const comentario = normalize(mComentario.value || "");
+    const dataApurada = (mDataApurada.value || "").trim();
+
+    const ref = doc(db, APURACOES_COLLECTION, CURRENT_T.id);
+
+    await setDoc(ref, {
+      treinoId: CURRENT_T.id,
+      metaAtingida: CURRENT_META,
+      comentario: comentario || null,
+      dataApurada: dataApurada || null,
+      avaliador: avaliador,
+      updatedAtText: new Date().toLocaleString("pt-BR"),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    APURACOES_MAP[CURRENT_T.id] = {
+      ...(APURACOES_MAP[CURRENT_T.id] || {}),
+      metaAtingida: CURRENT_META,
+      comentario: comentario || null,
+      dataApurada: dataApurada || null,
+      avaliador,
+      updatedAtText: new Date().toLocaleString("pt-BR")
+    };
+
+    closeModal();
+    render();
+  }
+
+  btnSalvarModal.addEventListener("click", async () => {
+    try{
+      setMsg("Salvando validação…");
+      await saveModal();
+      setMsg("Salvo ✅", "success");
+    }catch(e){
+      console.error(e);
+      setMsg("Erro ao salvar no Firebase. Verifique RULES.", "error");
+    }
+  });
+
+  function render(){
+    const monthKey = monthPicker.value;
+    const q = (busca.value || "").toLowerCase();
+    const pub = fPublico.value;
+    const cdFilter = normalize(fCd.value);
+    const statusFilter = fStatus.value;
+
+    const base = (TREINOS_CACHE || [])
+      .filter(t => String(t.data || "").slice(0,7) === monthKey)
+      .filter(t => !pub || t.publico === pub)
+      .filter(t => !cdFilter || normalize(t.cd) === cdFilter);
+
+    let rows = base.map(t => {
+      const ap = APURACOES_MAP[t.id] || {};
+      const metaAtingida = ap.metaAtingida || "pendente";
+      const st = computeStatusTabela(t.dataApuracao, metaAtingida);
+      return { t, st };
+    });
+
+    if (q){
+      rows = rows.filter(({t}) => {
+        const blob = [t.usuarioNome, t.treinamento, t.cd, t.publico].join(" ").toLowerCase();
+        return blob.includes(q);
+      });
+    }
+
+    if (statusFilter){
+      rows = rows.filter(({st}) => st.key === statusFilter);
+    }
+
+    rows.sort((a,b) => {
+      const d = String(b.t.data || "").localeCompare(String(a.t.data || ""));
+      if (d !== 0) return d;
+      return String(a.t.usuarioNome || "").localeCompare(String(b.t.usuarioNome || ""), "pt-BR");
+    });
+
+    tbody.innerHTML = "";
+
+    if (rows.length === 0){
+      tbody.innerHTML = `<tr><td colspan="7" style="opacity:.8;">Sem registros para este mês/filtros.</td></tr>`;
+      return;
+    }
+
+    for (const {t, st} of rows){
+      const prazo = t.dataApuracao ? toBR(t.dataApuracao) : "-";
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${t.usuarioNome || "-"}</td>
+        <td>${toBR(t.data)}</td>
+        <td>${t.cd || "-"}</td>
+        <td>${t.treinamento || "-"}</td>
+        <td>${prazo}</td>
+        <td><span class="status-pill ${st.cls}">${st.label}</span></td>
+        <td>
+          <button class="btn-mini primary" type="button" data-validate="${t.id}">Validar</button>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+    }
+
+    tbody.querySelectorAll("[data-validate]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-validate");
+        const t = TREINOS_CACHE.find(x => x.id === id);
+        if (t) openModal(t);
+      });
+    });
+  }
+
+  monthPicker.value = toMonthKey(new Date());
+
+  try{
+    setMsg("Carregando do Firebase…");
+    await loadTreinos();
+    await loadApuracoes();
+    setMsg("");
+    render();
+  }catch(e){
+    console.error(e);
+    setMsg("Erro ao carregar do Firebase. Verifique Rules/Conexão.", "error");
+    tbody.innerHTML = `<tr><td colspan="7" style="opacity:.8;">Falha ao carregar.</td></tr>`;
+  }
+
+  monthPicker.addEventListener("change", render);
+  busca.addEventListener("input", render);
+  fPublico.addEventListener("change", render);
+  fCd.addEventListener("input", render);
+  fStatus.addEventListener("change", render);
+</script>
+
+</body>
+</html>

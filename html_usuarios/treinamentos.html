@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Treinamentos Realizados</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    /* Multi-CD (chips) */
+    .chips-wrap{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.95);
+      font-weight: 900;
+      font-size: 12px;
+      line-height: 1;
+      max-width: 100%;
+    }
+    .chip .x{
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.05);
+      color: rgba(255,255,255,.9);
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+    .chip .t{
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .cd-row{
+      display:flex;
+      gap:10px;
+      align-items:flex-end;
+      flex-wrap:wrap;
+    }
+    .cd-row .grow{ flex: 1; min-width: 240px; }
+    .btn-mini{
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.95);
+      font-weight: 900;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .btn-mini.primary{
+      border-color: transparent;
+      background: rgba(217,27,46,.95);
+    }
+    .btn-mini:hover{ filter: brightness(1.08); }
+    .hint-inline{ margin-top:6px; opacity:.85; font-size: 12px; }
+
+    /* Ações sticky (primeira coluna) */
+    th.actions-col, td.actions-col{
+      position: sticky;
+      left: 0;
+      z-index: 3;
+      background: rgba(11,15,20,.96);
+      border-right: 1px solid rgba(255,255,255,.08);
+    }
+    thead th.actions-col{ z-index: 4; }
+
+    .actions-inline{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .btn-act{
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.15);
+      background:rgba(255,255,255,.06);
+      color:#e5e7eb;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .btn-act:hover{ filter: brightness(1.08); }
+    .btn-act.danger{
+      border-color: rgba(255,59,59,.35);
+      color:#ff8a8a;
+    }
+
+    /* Badge edição */
+    #editBadge{
+      display:none;
+      margin-top:6px;
+      color:#facc15;
+      font-weight:900;
+    }
+  </style>
+</head>
+
+<body class="bg">
+  <header class="topbar">
+    <div>
+      <h2>Treinamentos Realizados</h2>
+      <div id="userInfo" class="hint" style="color:#d1d5db;margin-top:4px;"></div>
+      <div id="editBadge">Modo edição ativo (1 linha / 1 CD). Atualize e salve.</div>
+    </div>
+
+    <div class="top-actions">
+      <button id="btnMenu" class="btn-secondary" type="button">Voltar ao Menu</button>
+      <button id="btnLogout" class="btn-secondary" type="button">Sair</button>
+    </div>
+  </header>
+
+  <main class="card wide">
+    <section class="row-between">
+      <div>
+        <h3>Registrar Treinamento</h3>
+        <p class="hint">Preencha os dados do treinamento realizado. Salva no Firebase (Firestore).</p>
+      </div>
+      <div>
+        <button id="btnCancelEdit" class="btn-secondary" type="button" style="display:none;">Cancelar edição</button>
+      </div>
+    </section>
+
+    <hr class="sep" />
+
+    <section class="form-grid">
+      <div>
+        <label for="dataTreino">Data</label>
+        <input id="dataTreino" type="date" />
+      </div>
+
+      <div>
+        <label for="dataApuracao">Data para apuração do resultado</label>
+        <input id="dataApuracao" type="date" />
+        <div class="hint" style="margin-top:6px;">Prazo para o avaliador validar se atingiu a meta.</div>
+      </div>
+
+      <div>
+        <label for="publico">Público-alvo</label>
+        <select id="publico" required>
+          <option value="" disabled selected>Selecione...</option>
+          <option value="Gestor">Gestor</option>
+          <option value="Vendedor">Vendedor</option>
+        </select>
+      </div>
+
+      <div style="grid-column: 1 / -1;">
+        <label for="treinamento">Treinamento realizado</label>
+        <select id="treinamento" required>
+          <option value="" disabled selected>Carregando treinamentos...</option>
+        </select>
+        <div class="hint" id="hintTreinos" style="margin-top:6px; opacity:.9;"></div>
+      </div>
+
+      <div style="grid-column: 1 / -1;">
+        <label for="cdInput">CD treinado (pode adicionar mais de um)</label>
+
+        <div class="cd-row">
+          <div class="grow">
+            <input id="cdInput" type="text" list="cdList" placeholder="Digite e selecione na lista..." />
+            <datalist id="cdList"></datalist>
+            <div class="hint-inline">Selecione na lista e clique em <b>Adicionar CD</b>. Cada CD vira 1 registro no histórico.</div>
+          </div>
+
+          <button id="btnAddCd" class="btn-mini primary" type="button">Adicionar CD</button>
+          <button id="btnSelectAllCds" class="btn-mini" type="button">Selecionar todos os CDs</button>
+          <button id="btnClearCds" class="btn-mini" type="button">Limpar CDs</button>
+        </div>
+
+        <div id="chips" class="chips-wrap"></div>
+      </div>
+
+      <div>
+        <label for="totalPessoas">Total de pessoas treinadas</label>
+        <input id="totalPessoas" type="number" min="1" step="1" placeholder="Ex: 18" required />
+      </div>
+
+      <div>
+        <label for="notaMedia">Nota média do treinamento</label>
+        <input id="notaMedia" type="number" min="0" max="10" step="0.1" placeholder="Ex: 8.7" required />
+      </div>
+
+      <div style="grid-column: 1 / -1;">
+        <label for="obs">Observações</label>
+        <input id="obs" type="text" maxlength="220" placeholder="Opcional" />
+      </div>
+
+      <div style="grid-column: 1 / -1;">
+        <label for="desafio">Desafio</label>
+        <input id="desafio" type="text" maxlength="160" placeholder="Ex: Aumentar adesão ao ritual da matinal..." required />
+      </div>
+
+      <div style="grid-column: 1 / -1;">
+        <label for="metaDesafio">Meta do desafio</label>
+        <input id="metaDesafio" type="text" maxlength="160" placeholder="Ex: 90% de participação + checklist padrão por 30 dias" required />
+      </div>
+
+      <div class="page-actions" style="grid-column: 1 / -1; justify-content:flex-end; gap:10px;">
+        <button id="btnSalvar" type="button">Salvar Treinamento</button>
+      </div>
+    </section>
+
+    <p id="msg" class="msg"></p>
+
+    <hr class="sep" />
+
+    <section class="row-between" style="align-items:flex-end;">
+      <div>
+        <h3>Meu Histórico</h3>
+        <p class="hint">Registros do usuário logado (Firebase). (1 linha por CD)</p>
+      </div>
+      <div style="min-width:260px;">
+        <label for="busca">Buscar</label>
+        <input id="busca" type="text" placeholder="Treinamento, CD, desafio..." />
+      </div>
+    </section>
+
+    <div class="table-wrap" style="margin-top:12px;">
+      <table class="table table-sticky">
+        <thead>
+          <tr>
+            <th class="actions-col" style="width:190px;">Ações</th>
+            <th style="width:120px;">Data</th>
+            <th style="width:140px;">Apuração (prazo)</th>
+            <th style="width:130px;">Público</th>
+            <th style="width:260px;">Treinamento</th>
+            <th style="width:240px;">CD</th>
+            <th style="width:130px;">Pessoas</th>
+            <th style="width:120px;">Nota</th>
+            <th style="width:260px;">Desafio</th>
+            <th style="width:260px;">Meta</th>
+            <th>Obs</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyHist"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script type="module">
+    import { db } from "../js/firebase.js";
+    import {
+      collection,
+      doc,
+      setDoc,
+      deleteDoc,
+      getDocs,
+      query,
+      where,
+      serverTimestamp
+    } from "firebase/firestore";
+
+    const TREINOS_COLLECTION = "treinamentos_realizados";
+    const CATALOGO_COLLECTIONS = ["catalogo_treinamentos","biblioteca_treinamentos","treinamentos","biblioteca"];
+    const CATALOGO_FIELDS = ["nome","treinamento","titulo","name"];
+
+    const PATH_INDEX = "../index.html";
+    const PATH_MENU  = "../html_menus/menu.html";
+
+    function safeParse(raw){ try { return JSON.parse(raw); } catch { return null; } }
+    function slug(s) {
+      return (s || "")
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+    }
+    function getCurrentUserName(){
+      const raw = localStorage.getItem("user_session");
+      if(raw){
+        const s = safeParse(raw);
+        if(s?.nome) return String(s.nome).trim();
+      }
+      return (localStorage.getItem("usuarioLogado") || "").trim();
+    }
+
+    const usuario = getCurrentUserName();
+    if (!usuario) window.location.href = PATH_INDEX;
+
+    document.getElementById("userInfo").textContent = `Usuário: ${usuario}`;
+    document.getElementById("btnMenu").onclick = () => window.location.href = PATH_MENU;
+    document.getElementById("btnLogout").onclick = () => {
+      localStorage.removeItem("user_session");
+      localStorage.removeItem("usuarioLogado");
+      window.location.href = PATH_INDEX;
+    };
+
+    const usuarioKey = slug(usuario);
+
+    const dataTreino = document.getElementById("dataTreino");
+    const dataApuracao = document.getElementById("dataApuracao");
+    const publico = document.getElementById("publico");
+    const treinamento = document.getElementById("treinamento");
+    const hintTreinos = document.getElementById("hintTreinos");
+
+    const cdInput = document.getElementById("cdInput");
+    const cdList = document.getElementById("cdList");
+    const btnAddCd = document.getElementById("btnAddCd");
+    const btnSelectAllCds = document.getElementById("btnSelectAllCds");
+    const btnClearCds = document.getElementById("btnClearCds");
+    const chipsEl = document.getElementById("chips");
+
+    const totalPessoas = document.getElementById("totalPessoas");
+    const notaMedia = document.getElementById("notaMedia");
+    const obs = document.getElementById("obs");
+    const desafio = document.getElementById("desafio");
+    const metaDesafio = document.getElementById("metaDesafio");
+    const btnSalvar = document.getElementById("btnSalvar");
+    const msg = document.getElementById("msg");
+    const busca = document.getElementById("busca");
+    const tbodyHist = document.getElementById("tbodyHist");
+
+    const btnCancelEdit = document.getElementById("btnCancelEdit");
+    const editBadge = document.getElementById("editBadge");
+
+    function setMsg(text, type="info"){
+      msg.textContent = text || "";
+      msg.style.color = type === "success" ? "#22c55e" : (type === "error" ? "#ef4444" : "#d1d5db");
+    }
+    function pad2(n){ return String(n).padStart(2,"0"); }
+    function todayISO(){
+      const d = new Date();
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    }
+    function toBR(iso){
+      if (!iso) return "-";
+      const [y,m,d] = String(iso).split("-");
+      return `${d}/${m}/${y}`;
+    }
+    function normalize(s){ return (s || "").replace(/\s+/g," ").trim(); }
+    function makeId(){
+      if (globalThis.crypto?.randomUUID) return crypto.randomUUID();
+      return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    }
+
+    const CDS_RAW = [
+      "CD - Alagoinhas","CD - Andradina","CD - Angra dos Reis","CD - Aparecida de Goiânia","CD - Araçatuba","CD - Arapiraca","CD - Araraquara",
+      "CD - Balsas","CD - Barbalha","CD - Barra do Garca","CD - Barreiras","CD - Barretos","CD - Barueri","CD - Bauru","CD - Belém","CD - Boituva",
+      "CD - Bom Jesus da Lapa","CD - Brumado","CD - Cachoeiro de Itapemirim","CD - Camaçari","CD - Campina Grande","CD - Campinas","CD - Campo Grande MS",
+      "CD - Campo Grande RJ","CD - Campos dos Goytacazes","CD - Caraguatatuba","CD - Cariacica","CD - Carpina","CD - Caruaru","CD - Cascavel","CD - Catanduva",
+      "CD - Caucaia","CD - Caxias","CD - Coimbra","CD - Conde","CD - Conselheiro Lafaiete","CD - Contagem","CD - Coxim","CD - Cuiabá",
+      "CD - Divinópolis","CD - Dourados","CD - Duque de Caxias","CD - Eunápolis","CD - Eusebio","CD - Feira de Santana",
+      "CD - Fernandópolis","CD - Floriano","CD - Garanhuns","CD - Governador Valadares","CD - Guarujá",
+      "CD - Guarulhos Taboão","CD - Iguatu","CD - Imperatriz","CD - Interlagos","CD - Iporá","CD - Irece","CD - Itabaiana","CD - Itaberaba","CD - Itabuna",
+      "CD - Itapeva","CD - Itapissuma","CD - Itumbiara","CD - Jaboatão dos Guararapes","CD - Jacobina","CD - Jaguaré","CD - Jequié","CD - Juazeiro","CD - Juiz de Fora",
+      "CD - Jundiaí","CD - Londrina","CD - Macaiba","CD - Maceió","CD - Marília","CD - Mogi-Mirim","CD - Montes Claros","CD - Mossoró","CD - Muriaé",
+      "CD - Nossa Senhora do Socorro","CD - Nova Friburgo","CD - Palhoça","CD - Paranaíba","CD - Parnaiba","CD - Passos","CD - Patos",
+      "CD - Paulo Afonso","CD - Petrolina","CD - Petrópolis","CD - Picos","CD - Piracicaba","CD - Poços de Caldas","CD - Porto Velho",
+      "CD - Pouso Alegre","CD - Presidente Prudente","CD - Recife","CD - Registro","CD - Ribeirão Preto","CD - Rio Branco","CD - Rio das Ostras","CD - Rio Verde",
+      "CD - Rondonópolis","CD - Salto","CD - Salvador","CD - Salvador Leste","CD - Santa Inês","CD - Santo Antonio de Jesus","CD - São Bernardo","CD - São Cristovão",
+      "CD - São Gonçalo","CD - São João de Meriti","CD - São José do Rio Preto","CD - São José dos Campos","CD - São José dos Pinhais","CD - São Luis","CD - São Mateus",
+      "CD - São Pedro da Aldeia","CD - Sapucaia do Sul","CD - Serra Talhada","CD - Serrinha","CD - Sete Lagoas","CD - Sinop","CD - Sobral","CD - Sousa",
+      "CD - Taboão da Serra","CD - Taguatinga","CD - Taubaté","CD - Teixeira de Freitas","CD - Teresina","CD - Três Lagoas","CD - Uberaba","CD - Varginha",
+      "CD - Vila Guilherme","CD - Vitória da Conquista","CD - Volta Redonda"
+    ];
+    const CDS = Array.from(new Set(CDS_RAW.map(s => normalize(s)))).filter(Boolean).sort((a,b)=>a.localeCompare(b,"pt-BR"));
+    cdList.innerHTML = CDS.map(x => `<option value="${x}"></option>`).join("");
+
+    let SELECTED_CDS = [];
+
+    function renderChips(){
+      chipsEl.innerHTML = "";
+      if (SELECTED_CDS.length === 0){
+        chipsEl.innerHTML = `<span class="hint" style="opacity:.85;">Nenhum CD adicionado ainda.</span>`;
+        return;
+      }
+      SELECTED_CDS.forEach(cd => {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.innerHTML = `
+          <span class="t" title="${cd}">${cd}</span>
+          <span class="x" data-x="${cd}">×</span>
+        `;
+        chipsEl.appendChild(chip);
+      });
+
+      chipsEl.querySelectorAll("[data-x]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const v = btn.getAttribute("data-x");
+          SELECTED_CDS = SELECTED_CDS.filter(x => x !== v);
+          renderChips();
+        });
+      });
+    }
+
+    function addCd(){
+      const v = normalize(cdInput.value);
+      if (!v){
+        setMsg("Digite/Selecione um CD e clique em Adicionar.", "error");
+        return;
+      }
+      if (!CDS.includes(v)){
+        setMsg("Selecione um CD válido da lista.", "error");
+        return;
+      }
+      if (SELECTED_CDS.includes(v)){
+        setMsg("Esse CD já foi adicionado.", "error");
+        return;
+      }
+      SELECTED_CDS.push(v);
+      cdInput.value = "";
+      renderChips();
+      setMsg("", "info");
+    }
+
+    function selectAllCds(){
+      SELECTED_CDS = [...CDS];
+      renderChips();
+      setMsg(`Todos os CDs foram selecionados ✅ (${SELECTED_CDS.length})`, "success");
+    }
+
+    btnAddCd.addEventListener("click", addCd);
+
+    btnSelectAllCds.addEventListener("click", () => {
+      if (EDITING_ID){
+        setMsg("Em edição, o registro aceita apenas 1 CD.", "error");
+        return;
+      }
+      selectAllCds();
+    });
+
+    cdInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter"){
+        e.preventDefault();
+        addCd();
+      }
+    });
+
+    btnClearCds.addEventListener("click", () => {
+      SELECTED_CDS = [];
+      renderChips();
+      setMsg("Seleção de CDs limpa.", "info");
+    });
+
+    function loadCatalogoLocal(){
+      const raw = localStorage.getItem("catalogo_treinamentos");
+      if (!raw) return [];
+      try { const arr = JSON.parse(raw); return Array.isArray(arr) ? arr : []; } catch { return []; }
+    }
+
+    function pickNomeFromDoc(data){
+      for (const f of CATALOGO_FIELDS){
+        const v = (data?.[f] || "").toString().trim();
+        if (v) return v;
+      }
+      return "";
+    }
+
+    async function loadCatalogoFirestoreRobusto(){
+      for (const colName of CATALOGO_COLLECTIONS){
+        try{
+          const snap = await getDocs(collection(db, colName));
+          const out = [];
+          snap.forEach(d => {
+            const nome = pickNomeFromDoc(d.data());
+            if (nome) out.push({ nome });
+          });
+          if (out.length > 0) return { source: colName, data: out };
+        }catch(e){}
+      }
+      return { source: null, data: [] };
+    }
+
+    async function renderTreinosSelect(){
+      treinamento.innerHTML = `<option value="" disabled selected>Carregando treinamentos...</option>`;
+      hintTreinos.textContent = "";
+
+      const fire = await loadCatalogoFirestoreRobusto();
+      let catalogo = fire.data;
+      let origem = fire.source;
+
+      if (!catalogo || catalogo.length === 0){
+        const local = loadCatalogoLocal();
+        catalogo = (local || []).map(x => ({
+          nome: (x?.nome || x?.treinamento || x?.titulo || x?.name || "").toString().trim()
+        })).filter(x => x.nome);
+        origem = "localStorage";
+      }
+
+      const nomes = Array.from(new Set((catalogo || []).map(x => (x?.nome || "").toString().trim()).filter(Boolean)))
+        .sort((a,b)=>a.localeCompare(b,"pt-BR"));
+
+      if (nomes.length === 0){
+        treinamento.innerHTML = `<option value="" disabled selected>Nenhum treinamento cadastrado</option>`;
+        hintTreinos.textContent = "Cadastre primeiro na Biblioteca.";
+        return;
+      }
+
+      treinamento.innerHTML =
+        `<option value="" disabled selected>Selecione...</option>` +
+        nomes.map(nome => `<option value="${nome}">${nome}</option>`).join("");
+
+      hintTreinos.textContent = `Treinamentos: ${nomes.length} | Origem: ${origem || "-"}`;
+    }
+
+    let HIST_CACHE = [];
+
+    async function loadHistFromFirebase(){
+      // 1) Query by uidKey
+      const q1 = query(collection(db, TREINOS_COLLECTION), where("uidKey", "==", usuarioKey));
+      const s1 = await getDocs(q1);
+      const a1 = s1.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // 2) Query by usuarioNome (case sensitive)
+      let a2 = [];
+      if(usuario){
+        const q2 = query(collection(db, TREINOS_COLLECTION), where("usuarioNome", "==", usuario));
+        const s2 = await getDocs(q2);
+        a2 = s2.docs.map(d => ({ id: d.id, ...d.data() }));
+      }
+
+      // Merge
+      const map = new Map();
+      [...a1, ...a2].forEach(x => map.set(x.id, x));
+      const arr = Array.from(map.values());
+
+      arr.sort((a,b) => String(b.data || "").localeCompare(String(a.data || "")));
+      HIST_CACHE = arr;
+      return arr;
+    }
+
+    let EDITING_ID = null;
+
+    function setEditingMode(isEditing){
+      editBadge.style.display = isEditing ? "block" : "none";
+      btnCancelEdit.style.display = isEditing ? "inline-flex" : "none";
+      btnSalvar.textContent = isEditing ? "Atualizar Registro" : "Salvar Treinamento";
+
+      cdInput.disabled = isEditing;
+      btnAddCd.disabled = isEditing;
+      btnSelectAllCds.disabled = isEditing;
+      btnClearCds.disabled = isEditing;
+      chipsEl.style.opacity = isEditing ? ".65" : "1";
+    }
+
+    function resetFormKeepDate(){
+      publico.value = "";
+      treinamento.value = "";
+      totalPessoas.value = "";
+      notaMedia.value = "";
+      obs.value = "";
+      desafio.value = "";
+      metaDesafio.value = "";
+      dataApuracao.value = "";
+      SELECTED_CDS = [];
+      renderChips();
+    }
+
+    function startEdit(item){
+      if (!item?.id) return;
+      EDITING_ID = item.id;
+
+      dataTreino.value = item.data || todayISO();
+      dataApuracao.value = item.dataApuracao || "";
+      publico.value = item.publico || "";
+      treinamento.value = item.treinamento || "";
+      totalPessoas.value = item.totalPessoas ?? "";
+      notaMedia.value = item.notaMedia ?? "";
+      obs.value = item.obs || "";
+      desafio.value = item.desafio || "";
+      metaDesafio.value = item.meta || "";
+
+      SELECTED_CDS = item.cd ? [normalize(item.cd)] : [];
+      renderChips();
+
+      setEditingMode(true);
+      setMsg("Editando registro. Ajuste e clique em Atualizar.", "info");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    btnCancelEdit.addEventListener("click", () => {
+      EDITING_ID = null;
+      setEditingMode(false);
+      resetFormKeepDate();
+      setMsg("Edição cancelada.", "info");
+    });
+
+    function renderHist(){
+      const q = (busca.value || "").toLowerCase();
+      const data = (HIST_CACHE || []).slice();
+
+      const filtered = q ? data.filter(x =>
+        [x.treinamento, x.cd, x.publico, x.desafio, x.meta, x.obs, x.dataApuracao].join(" ").toLowerCase().includes(q)
+      ) : data;
+
+      tbodyHist.innerHTML = "";
+
+      if (filtered.length === 0){
+        tbodyHist.innerHTML = `<tr><td colspan="11" style="opacity:.8;">Nenhum registro ainda.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="actions-col" style="width:190px;">
+            <div class="actions-inline">
+              <button class="btn-act" type="button" data-edit="${item.id}">Editar</button>
+              <button class="btn-act danger" type="button" data-del="${item.id}">Excluir</button>
+            </div>
+          </td>
+
+          <td>${toBR(item.data)}</td>
+          <td>${toBR(item.dataApuracao)}</td>
+          <td>${item.publico || "-"}</td>
+          <td>${item.treinamento || "-"}</td>
+          <td>${item.cd || "-"}</td>
+          <td>${item.totalPessoas ?? "-"}</td>
+          <td>${item.notaMedia ?? "-"}</td>
+          <td>${item.desafio || "-"}</td>
+          <td>${item.meta || "-"}</td>
+          <td>${item.obs || "-"}</td>
+        `;
+        tbodyHist.appendChild(tr);
+      });
+
+      tbodyHist.querySelectorAll("[data-edit]").forEach(btn => {
+        btn.onclick = () => {
+          const id = btn.getAttribute("data-edit");
+          const item = (HIST_CACHE || []).find(x => x.id === id);
+          if (!item) return;
+          startEdit(item);
+        };
+      });
+
+      tbodyHist.querySelectorAll("[data-del]").forEach(btn => {
+        btn.onclick = async () => {
+          const id = btn.getAttribute("data-del");
+          if (!id) return;
+
+          if (EDITING_ID === id){
+            EDITING_ID = null;
+            setEditingMode(false);
+            resetFormKeepDate();
+          }
+
+          try{
+            setMsg("Excluindo…");
+            await deleteDoc(doc(db, TREINOS_COLLECTION, id));
+            HIST_CACHE = HIST_CACHE.filter(x => x.id !== id);
+            renderHist();
+            setMsg("Registro excluído ✅", "success");
+          }catch(e){
+            console.error(e);
+            setMsg("Erro ao excluir no Firebase. Verifique Rules.", "error");
+          }
+        };
+      });
+    }
+
+    btnSalvar.onclick = async () => {
+      setMsg("");
+
+      const base = {
+        data: dataTreino.value || todayISO(),
+        dataApuracao: (dataApuracao.value || "").trim(),
+
+        publico: publico.value,
+        treinamento: treinamento.value,
+
+        totalPessoas: Number(totalPessoas.value),
+        notaMedia: Number(notaMedia.value),
+
+        obs: normalize(obs.value),
+        desafio: normalize(desafio.value),
+        meta: normalize(metaDesafio.value)
+      };
+
+      if (!base.publico || !base.treinamento || !base.desafio || !base.meta){
+        setMsg("Preencha: Público, Treinamento, Desafio e Meta.", "error");
+        return;
+      }
+      if (!base.dataApuracao){
+        setMsg("Preencha a Data para apuração do resultado.", "error");
+        return;
+      }
+      if (!Number.isFinite(base.totalPessoas) || base.totalPessoas < 1){
+        setMsg("Total de pessoas deve ser 1 ou mais.", "error");
+        return;
+      }
+      if (!Number.isFinite(base.notaMedia) || base.notaMedia < 0 || base.notaMedia > 10){
+        setMsg("Nota média deve estar entre 0 e 10.", "error");
+        return;
+      }
+
+      if (EDITING_ID){
+        if (SELECTED_CDS.length !== 1){
+          setMsg("Em edição, o registro deve ter exatamente 1 CD.", "error");
+          return;
+        }
+        const cdItem = SELECTED_CDS[0];
+        if (!CDS.includes(cdItem)){
+          setMsg("CD inválido no registro. Reabra e selecione pela lista.", "error");
+          return;
+        }
+
+        try{
+          setMsg("Atualizando no Firebase…");
+
+          await setDoc(doc(db, TREINOS_COLLECTION, EDITING_ID), {
+            uidKey: usuarioKey,
+            usuarioNome: usuario,
+
+            data: base.data,
+            dataApuracao: base.dataApuracao,
+
+            publico: base.publico,
+            treinamento: base.treinamento,
+            cd: cdItem,
+
+            totalPessoas: base.totalPessoas,
+            notaMedia: base.notaMedia,
+
+            obs: base.obs || null,
+            desafio: base.desafio,
+            meta: base.meta,
+
+            atualizadoEm: serverTimestamp()
+          }, { merge: true });
+
+          setMsg("Registro atualizado ✅", "success");
+
+          EDITING_ID = null;
+          setEditingMode(false);
+          resetFormKeepDate();
+
+          await loadHistFromFirebase();
+          renderHist();
+
+        }catch(e){
+          console.error(e);
+          setMsg("Erro ao atualizar no Firebase. Normalmente é RULES (PERMISSION_DENIED).", "error");
+        }
+        return;
+      }
+
+      if (SELECTED_CDS.length === 0){
+        setMsg("Adicione pelo menos 1 CD (Adicionar CD).", "error");
+        return;
+      }
+
+      const cdsValidos = SELECTED_CDS.filter(x => CDS.includes(x));
+      if (cdsValidos.length !== SELECTED_CDS.length){
+        setMsg("Existe CD inválido na lista. Remova e adicione novamente pela lista.", "error");
+        return;
+      }
+
+      try{
+        setMsg("Salvando no Firebase…");
+
+        const ops = cdsValidos.map(async (cdItem) => {
+          const id = makeId();
+          return setDoc(doc(db, TREINOS_COLLECTION, id), {
+            uidKey: usuarioKey,
+            usuarioNome: usuario,
+
+            id,
+            data: base.data,
+            dataApuracao: base.dataApuracao,
+
+            publico: base.publico,
+            treinamento: base.treinamento,
+            cd: cdItem,
+
+            totalPessoas: base.totalPessoas,
+            notaMedia: base.notaMedia,
+
+            obs: base.obs || null,
+            desafio: base.desafio,
+            meta: base.meta,
+
+            criadoEm: serverTimestamp(),
+            atualizadoEm: serverTimestamp()
+          }, { merge: true });
+        });
+
+        await Promise.all(ops);
+
+        setMsg(`Treinamento registrado ✅ (${cdsValidos.length} CD(s) lançado(s))`, "success");
+
+        resetFormKeepDate();
+
+        await loadHistFromFirebase();
+        renderHist();
+
+      }catch(e){
+        console.error(e);
+        setMsg("Erro ao salvar no Firebase. Normalmente é RULES (PERMISSION_DENIED).", "error");
+      }
+    };
+
+    dataTreino.value = todayISO();
+    dataApuracao.value = "";
+    renderChips();
+    await renderTreinosSelect();
+
+    try{
+      setMsg("Carregando histórico…");
+      await loadHistFromFirebase();
+      setMsg("");
+      renderHist();
+    }catch(e){
+      console.error(e);
+      setMsg("Falha ao carregar do Firebase. Normalmente é RULES (permissão).", "error");
+      renderHist();
+    }
+
+    busca.addEventListener("input", renderHist);
+  </script>
+</body>
+</html>

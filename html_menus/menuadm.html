@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Menu Admin</title>
+
+  <style>
+    :root{
+      --bg:#ffffff; --txt:#0b0b0b; --muted:#666; --line:#eee;
+      --btn-bg:#f9f9f9; --btn-br:#e5e5e5; --btn-hover:#000; --btn-hover-txt:#fff;
+      --shadow:0 20px 60px rgba(0,0,0,.08);
+    }
+    *{ box-sizing:border-box }
+    html,body{ height:100% }
+    body{
+      margin:0; background:var(--bg); color:var(--txt);
+      font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      display:grid; place-items:center; padding:16px;
+    }
+    .card{
+      width:100%; max-width:440px; background:#fff; border-radius:28px;
+      padding:28px; box-shadow:var(--shadow);
+    }
+    header.top{ display:flex; align-items:center; gap:14px }
+    .logo{
+      inline-size:60px; block-size:60px; background:#000; color:#fff;
+      font-weight:700; border-radius:18px; display:grid; place-items:center; font-size:18px;
+      user-select:none;
+    }
+    header.top h1{ margin:0; font-size:18px; color:#000 }
+    header.top small{ color:var(--muted); font-size:13px; display:block; margin-top:2px }
+    hr{ margin:22px 0; border:none; height:1px; background:var(--line) }
+
+    nav[aria-label]{ display:grid; gap:12px }
+
+    .btn{
+      appearance:none; width:100%;
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:16px 18px; border-radius:18px; border:1px solid var(--btn-br);
+      background:var(--btn-bg); font-size:15px; font-weight:600; color:#000;
+      text-decoration:none; cursor:pointer;
+      transition:transform .15s ease, background .15s ease, color .15s ease, border-color .15s ease;
+    }
+    .btn:hover, .btn:focus-visible{
+      background:var(--btn-hover); color:var(--btn-hover-txt);
+      transform:translateY(-2px); outline:none; border-color:#000;
+    }
+
+    .btn-exit{
+      margin-top:4px; background:#fff; border:1px solid #ddd; color:#111;
+      font-weight:600;
+    }
+    .btn-exit:hover, .btn-exit:focus-visible{
+      background:#000; color:#fff; border-color:#000;
+    }
+
+    .user{ margin-top:8px; font-size:13px; color:#777 }
+
+    @media (prefers-reduced-motion: reduce){
+      .btn{ transition:none }
+      .btn:hover, .btn:focus-visible{ transform:none }
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="main">
+    <header class="top">
+      <div class="logo" aria-hidden="true">GP</div>
+      <div>
+        <h1>Menu Administrativo</h1>
+        <small id="userInfo" class="user" aria-live="polite"></small>
+      </div>
+    </header>
+
+    <hr>
+
+    <!-- Menu principal (ADM) -->
+    <nav aria-label="Menu administrativo">
+      <!-- IMPORTANTE: como este arquivo está em /html_menus/menu.html, usamos caminhos relativos ../html_adm/... -->
+      <a class="btn" href="../html_adm/apuracao.html">Apuração</a>
+      <a class="btn" href="../html_adm/agenda-dia-adm.html">Agenda do Dia</a>
+      <a class="btn" href="../html_adm/agenda-mensal-adm.html">Agenda Mensal</a>
+      <a class="btn" href="../html_adm/treinos-resumo-adm.html">Resumo de Treinamentos</a>
+      <a class="btn" href="../html_adm/rps-adm.html">RPS</a>
+      <a class="btn" href="../html_adm/cadastro-treinamento.html">Cadastro de Treinamentos</a>
+    </nav>
+
+    <hr>
+
+    <button class="btn btn-exit" type="button" id="btnSair">Sair</button>
+  </main>
+
+  <script>
+    // Se você RENOMEAR a pasta para "html_adm", troque abaixo para: const basePathAdm = "../html_adm/";
+    // Mantive somente para o fluxo de logout e fallback de login.
+    const basePathAdm = "../html_adm/";
+
+    // Proteção de sessão
+    const usuario = localStorage.getItem("usuarioLogado") || "";
+    if (!usuario) {
+      // OBS: index.html provavelmente está na raiz (ex.: /jornada-analista/index.html).
+      // Se o seu index.html estiver em outro lugar, ajuste o caminho relativo aqui.
+      window.location.replace("../index.html");
+    }
+
+    // Saudação
+    const userInfoEl = document.getElementById("userInfo");
+    if (userInfoEl) {
+      userInfoEl.textContent = `Olá, ${usuario}`;
+      userInfoEl.title = `Usuário logado: ${usuario}`;
+    }
+
+    // Logout
+    document.getElementById("btnSair").addEventListener("click", () => {
+      try{
+        localStorage.removeItem("usuarioLogado");
+        localStorage.removeItem("user_session");
+      }catch(e){
+        console.warn("Não foi possível limpar o armazenamento:", e);
+      }finally{
+        // Redireciona para a home de login (um nível acima de /html menus/)
+        window.location.href = "../index.html";
+      }
+    });
+  </script>
+</body>
+</html>
