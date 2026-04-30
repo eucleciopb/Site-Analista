@@ -403,56 +403,35 @@ async function loadCDsToDatalist() {
 ========================= */
 async function loadMonthFromFirestore(yyyyMM) {
   if (!yyyyMM) return;
+  const map = {};
+
   if (!db) {
     console.error("[LOAD] Erro: Firebase não inicializado (db é nulo)");
     setStatus("Erro: Firebase OFFLINE");
     return;
   }
 
-  setStatus("Sincronizando do Firebase...");
+  setStatus("Sincronizando...");
   console.log(`%c[LOAD] Sincronização iniciada para ${yyyyMM}`, "color: #3b82f6; font-weight: bold;");
   
   try {
     const coll = collection(db, AGENDA_COLLECTION);
-    const map = {};
-
-    // 1. Tentar descobrir o UID do usuário para chaves exatas
-    let detectedUid = null;
-    try {
-      const uSnap = await getDocs(query(collection(db, "usuarios"), where("nome", "==", usuarioNome)));
-      uSnap.forEach(d => detectedUid = d.id);
-      
-      if (!detectedUid) {
-        const uSnap2 = await getDocs(query(collection(db, "users"), where("name", "==", usuarioNome)));
-        uSnap2.forEach(d => detectedUid = d.id);
-      }
-      
-      if (detectedUid) console.log(`[LOAD] UID detectado para ${usuarioNome}: ${detectedUid}`);
-    } catch (e) {
-      console.warn("[LOAD] Falha ao buscar UID nas coleções de usuários", e);
-    }
-
-    // 2. Chaves de pesquisa abrangentes
     const queries = [];
-    if (detectedUid) queries.push(query(coll, where("uid", "==", detectedUid)));
-    if (usuarioKey) {
-      queries.push(query(coll, where("uidKey", "==", usuarioKey)));
-      queries.push(query(coll, where("usuarioKey", "==", usuarioKey)));
-    }
     
-    // Variações de caso para o nome
-    const nameVars = [usuarioNome, usuarioNome.toLowerCase(), usuarioNome.toUpperCase(), 
-                     usuarioNome.charAt(0).toUpperCase() + usuarioNome.slice(1).toLowerCase()];
+    // 1. Busca por Mês + Nome do Usuário (em variações)
+    const nameVars = [usuarioNome, usuarioNome.toLowerCase(), usuarioNome.toUpperCase()];
     const uniqueNames = [...new Set(nameVars)];
-    
     uniqueNames.forEach(n => {
-      queries.push(query(coll, where("usuarioNome", "==", n)));
-      queries.push(query(coll, where("analyst", "==", n)));
-      queries.push(query(coll, where("analista", "==", n)));
-      queries.push(query(coll, where("nome", "==", n)));
+       queries.push(query(coll, where("yyyyMM", "==", yyyyMM), where("usuarioNome", "==", n)));
+       queries.push(query(coll, where("yyyyMM", "==", yyyyMM), where("uidKey", "==", n.toLowerCase())));
     });
 
-    // 3. Execução paralela das consultas
+    // 2. Busca GERAL pelo mês (emergência se o nome não bater)
+    queries.push(query(coll, where("yyyyMM", "==", yyyyMM)));
+
+    // 3. Busca pelo uidKey se existir
+    if (usuarioKey) queries.push(query(coll, where("uidKey", "==", usuarioKey), where("yyyyMM", "==", yyyyMM)));
+
     const results = await Promise.allSettled(queries.map(q => getDocs(q)));
     let totalDocsRaw = 0;
     const processedIds = new Set();
@@ -466,24 +445,19 @@ async function loadMonthFromFirestore(yyyyMM) {
           processedIds.add(d.id);
 
           const data = d.data();
-          
-          // Compatibilidade com múltiplos nomes de campo para o Mês
           const itemMonth = data.yyyyMM || data.monthKey || 
                            (data.data && typeof data.data === 'string' && data.data.substring(0, 7)) || 
-                           (data.date && typeof data.date === 'string' && data.date.substring(0, 7)) ||
-                           (data.dia && typeof data.dia === 'string' && data.dia.substring(0, 7));
+                           (data.date && typeof data.date === 'string' && data.date.substring(0, 7));
           
           if (itemMonth === yyyyMM) {
             console.log(`[LOAD] Doc compatível ${d.id}:`, data);
             
-            // Formato Consolidado (campo 'dias')
             if (data.dias && typeof data.dias === "object") {
               Object.entries(data.dias).forEach(([dt, val]) => {
                 const key = dt.substring(0, 10);
                 map[key] = { ...val, data: key };
               });
             } else {
-              // Formato individual (um doc por dia)
               const dt = data.data || data.date || data.dia || (d.id.includes("_") ? d.id.split("_")[1] : d.id);
               if (dt && typeof dt === "string" && dt.length >= 10) {
                 const key = dt.substring(0, 10);
@@ -507,34 +481,36 @@ async function loadMonthFromFirestore(yyyyMM) {
       if (tr.dataset.sunday === "1") continue;
       const dateISO = tr.dataset.date;
       const saved = map[dateISO];
-      if (!saved) continue;
-
+      
       const cdInp = tr.querySelector("[data-field='cd']");
       const actSel = tr.querySelector("[data-field='atividade']");
       const obsTxt = tr.querySelector("[data-field='obs']");
 
-      if (cdInp) cdInp.value = saved.cd || saved.CD || saved.centro_distribuicao || "";
-      if (actSel) actSel.value = saved.atividade || saved.Atividade || saved.tipo_atividade || "";
-      
-      // Múltiplos nomes para observações
-      const obsValue = saved.obs || saved.Obs || saved.observacoes || saved.observacao || saved.Observação || "";
-      if (obsTxt) obsTxt.value = obsValue;
-      
-      updateValidationUI(cdInp);
-      loadedCount++;
+      if (saved) {
+        if (cdInp) cdInp.value = saved.cd || saved.CD || saved.centro_distribuicao || "";
+        if (actSel) actSel.value = saved.atividade || saved.Atividade || saved.tipo_atividade || "";
+        const obsValue = saved.obs || saved.Obs || saved.observacoes || saved.observacao || saved.Observação || "";
+        if (obsTxt) obsTxt.value = obsValue;
+        updateValidationUI(cdInp);
+        loadedCount++;
+      } else {
+        // Reset campos se não houver dados
+        if (cdInp) cdInp.value = "";
+        if (actSel) actSel.value = "";
+        if (obsTxt) obsTxt.value = "";
+      }
     }
     
     if (loadedCount > 0) {
       setStatus(`${loadedCount} dias carregados`);
-      setMsg("Agenda sincronizada com sucesso.", "success");
+      setMsg(`Agenda de ${yyyyMM} sincronizada.`, "success");
     } else {
       setStatus("Nenhum dado encontrado");
       if (otherMonths.size > 0) {
-        const monthsList = [...otherMonths].sort().join(", ");
-        setMsg(`Dados encontrados para outros meses: ${monthsList}. Troque o mês para visualizar.`, "info");
-        console.log(`[LOAD] Meses com dados encontrados: ${monthsList}`);
-      } else if (totalDocsRaw === 0) {
-        setMsg("Nenhum dado encontrado no banco para este usuário.", "info");
+        const sorted = [...otherMonths].sort();
+        setMsg(`Dados encontrados em outros meses: ${sorted.join(", ")}.`, "info");
+      } else {
+        setMsg(`Nenhum dado salvo para ${yyyyMM}.`, "info");
       }
     }
   } catch (err) {
