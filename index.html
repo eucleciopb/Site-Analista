@@ -3,7 +3,7 @@
 <html class="dark" lang="pt-br"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<title>Portal de Treinamentos - Terminal de Acesso</title>
+<title>Portal do Analista</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -154,17 +154,17 @@
 </div>
 <!-- Cabeçalho do Terminal -->
 <div class="mb-10 text-center w-full">
-<h1 class="text-2xl font-bold tracking-tight text-white mb-1">Terminal de Acesso</h1>
+<h1 class="text-2xl font-bold tracking-tight text-white mb-1">Portal do Analista</h1>
 <div class="flex items-center justify-center gap-3">
 <span class="h-[1px] w-6 bg-white/10"></span>
-<p class="text-[10px] font-semibold text-primary uppercase tracking-[0.2em]">Operação de Campo</p>
+<p class="text-[10px] font-semibold text-primary uppercase tracking-[0.2em]">Jornada Comercial</p>
 <span class="h-[1px] w-6 bg-white/10"></span>
 </div>
 </div>
 <!-- Formulário de Autenticação -->
 <div class="w-full space-y-6">
 <div class="space-y-2">
-<label class="block ml-1 text-[11px] font-medium uppercase tracking-wider text-on-surface-variant" for="usuario">Autenticação do Agente</label>
+<label class="block ml-1 text-[11px] font-medium uppercase tracking-wider text-on-surface-variant" for="usuario">Analista</label>
 <div class="relative">
 <select class="input-cyber w-full h-12 px-4 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none appearance-none cursor-pointer" id="usuario">
 <option disabled="" selected="" value="">Selecione o Agente...</option>
@@ -199,7 +199,7 @@
 <div class="mt-10 pt-6 border-t border-white/5 w-full flex items-center justify-between">
 <div class="flex flex-col gap-0.5">
 <p class="text-[9px] text-white/30 uppercase tracking-widest font-mono">Node: GP-ALPHA-PORTAL</p>
-<p class="text-[8px] text-white/10 uppercase font-mono">Status: Secure Layer Active</p>
+<p class="text-[8px] text-white/10 uppercase font-mono">Status: Sistema Operacional</p>
 </div>
 <div class="flex gap-2">
 <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
@@ -215,23 +215,30 @@
 
     async function testConnection() {
       try {
-        if (!auth.currentUser) await signInAnonymously(auth);
+        // Aguarda a inicialização do Firebase Auth antes de tentar login anônimo
+        await auth.authStateReady();
+        
+        if (!auth.currentUser) {
+           await signInAnonymously(auth);
+           console.log("Sessão anônima iniciada.");
+        }
+        
         const testRef = doc(db, "cds", "connection-test");
         await getDoc(testRef);
-        console.log("Conectado ao Firebase com sucesso.");
+        console.log("Conectado ao Database com sucesso.");
       } catch (error) {
-         console.error("Erro CRÍTICO de conexão Firebase:", error);
-         handleFirestoreError(error, OperationType.GET, "conn-test");
+         console.warn("Aviso de Conexão:", error.message);
+         // Não bloqueia a entrada se for apenas um aviso, mas loga se for erro grave
+         if (error.code !== 'auth/network-request-failed' && error.code !== 'permission-denied') {
+            handleFirestoreError(error, OperationType.GET, "conn-test");
+         }
       }
     }
     
-    testConnection().catch(e => {
-      try {
-        const errObj = JSON.parse(e.message);
-        setMsg(`Erro de conexão: ${errObj.error}`, false);
-      } catch {
-        setMsg("Erro de conexão: " + e.message, false);
-      }
+    testConnection().then(() => {
+      console.log("Verificação de prontidão concluída.");
+    }).catch(e => {
+      console.error("Falha na varredura inicial:", e);
     });
 
     const usuarioSelect = document.getElementById("usuario");
@@ -265,18 +272,19 @@
 
       try {
         try {
+          await auth.authStateReady();
           if (!auth.currentUser) {
             await signInAnonymously(auth);
           }
         } catch (authError) {
-          console.warn("Aviso: Autenticação anônima falhou.", authError);
+          console.warn("Aviso: Autenticação anônima falhou, mas continuando...", authError);
         }
 
         localStorage.setItem("user_session", JSON.stringify({
           nome: usuario,
           matricula: usuario,
           perfil: "analista",
-          uid: auth.currentUser ? auth.currentUser.uid : null,
+          uid: auth.currentUser ? auth.currentUser.uid : "anon-" + Date.now(),
           loginAt: Date.now()
         }));
 
@@ -285,22 +293,26 @@
 
         const path = "acessos";
         try {
-          await addDoc(collection(db, path), {
+          // Log de acesso sem bloquear
+          addDoc(collection(db, path), {
             usuario,
             origem: "index.html",
-            evento: "LOGIN_SEM_AUTH",
+            evento: "RESILIENT_LOGIN",
             criadoEm: serverTimestamp(),
             userAgent: navigator.userAgent || null
-          });
+          }).catch(err => console.warn("Log de acesso falhou (não bloqueante):", err));
         } catch (e) {
-          handleFirestoreError(e, OperationType.CREATE, path);
+           console.warn("Tentativa de log falhou:", e);
         }
 
-        window.location.href = "html_menus/menu.html";
+        // Delay suave para feedback visual
+        setTimeout(() => {
+          window.location.href = "html_menus/menu.html";
+        }, 800);
 
       } catch (e) {
-        console.error(e);
-        setMsg("Falha na autenticação. Verifique sua rede.", false);
+        console.error("Erro fatal no login:", e);
+        setMsg("Erro crítico no sistema. Tente novamente.", false);
         btnEntrar.disabled = false;
         btnEntrar.style.opacity = "1";
       }
