@@ -1,0 +1,99 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isVerified() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isVerified() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Entity Validations ---
+
+    function isValidTraining(data) {
+      return data.keys().hasAll(['title', 'date', 'status', 'createdBy', 'createdAt', 'updatedAt']) &&
+             data.title is string && data.title.size() <= 200 &&
+             data.date is string && data.date.size() <= 100 &&
+             data.status in ['scheduled', 'completed', 'cancelled'] &&
+             data.createdBy == request.auth.uid &&
+             data.createdAt is timestamp &&
+             data.updatedAt == request.time;
+    }
+
+    function isValidLibraryItem(data) {
+      return data.keys().hasAll(['title', 'category', 'createdBy', 'createdAt']) &&
+             data.title is string && data.title.size() <= 200 &&
+             data.category is string && data.category.size() <= 50 &&
+             data.createdBy == request.auth.uid &&
+             data.createdAt == request.time;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['displayName', 'email']) &&
+             data.displayName is string && data.displayName.size() <= 100 &&
+             data.email is string && data.email.size() <= 100 &&
+             (data.keys().hasOnly(['displayName', 'email', 'photoURL', 'role', 'lastActive', 'uid']));
+    }
+
+    // --- Collection Rules ---
+
+    match /trainings/{trainingId} {
+      allow read: if isVerified() && resource.data.createdBy != null; // Secure list check
+      allow create: if isVerified() && isValidId(trainingId) && isValidTraining(incoming()) && incoming().createdAt == request.time;
+      allow update: if isVerified() && isValidTraining(incoming()) && (
+        isAdmin() || 
+        (isOwner(existing().createdBy) && 
+         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'date', 'status', 'description', 'location', 'updatedAt']))
+      );
+      allow delete: if isVerified() && (isAdmin() || isOwner(existing().createdBy));
+    }
+
+    match /library/{itemId} {
+      allow read: if isVerified() && resource.data.createdBy != null; // Secure list check
+      allow create: if isVerified() && isValidId(itemId) && isValidLibraryItem(incoming());
+      allow update: if isVerified() && isValidLibraryItem(incoming()) && (
+        isAdmin() || 
+        (isOwner(existing().createdBy) && 
+         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'category', 'url', 'thumbnail']))
+      );
+      allow delete: if isVerified() && (isAdmin() || isOwner(existing().createdBy));
+    }
+
+    match /users/{userId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && isOwner(userId) && isValidUser(incoming()) && incoming().role != 'admin';
+      allow update: if isVerified() && (
+        isAdmin() || 
+        (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'lastActive']) && incoming().role == existing().role)
+      );
+    }
+  }
+}

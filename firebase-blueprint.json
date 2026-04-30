@@ -1,0 +1,64 @@
+{
+  "entities": {
+    "Training": {
+      "title": "Training Session",
+      "description": "A scheduled or completed training session for the team.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Title of the training" },
+        "date": { "type": "string", "format": "date-time", "description": "Scheduled date and time" },
+        "instructor": { "type": "string", "description": "Name or ID of the instructor" },
+        "team": { "type": "string", "description": "Target team for the training" },
+        "status": { "type": "string", "enum": ["scheduled", "completed", "cancelled"], "description": "Current status of the training" },
+        "description": { "type": "string", "description": "Detailed description of contents" },
+        "location": { "type": "string", "description": "Physical or virtual location link" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp" },
+        "createdBy": { "type": "string", "description": "User ID of the creator" }
+      },
+      "required": ["title", "date", "status", "createdBy"]
+    },
+    "LibraryItem": {
+      "title": "Library Resource",
+      "description": "A document, video, or link in the training library.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Title of the resource" },
+        "description": { "type": "string", "description": "Short summary of the resource" },
+        "category": { "type": "string", "description": "Category (e.g., Frontend, Backend, Process)" },
+        "url": { "type": "string", "description": "Link to the resource" },
+        "thumbnail": { "type": "string", "description": "Image URL for the cover" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "createdBy": { "type": "string", "description": "User ID of the uploader" }
+      },
+      "required": ["title", "category", "createdBy"]
+    },
+    "User": {
+      "title": "User Profile",
+      "description": "Information about a team member.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "member"] },
+        "lastActive": { "type": "string", "format": "date-time" }
+      },
+      "required": ["displayName", "email"]
+    }
+  },
+  "firestore": {
+    "trainings": {
+      "schema": "Training",
+      "description": "Collection of all training sessions."
+    },
+    "library": {
+      "schema": "LibraryItem",
+      "description": "Collection of training resources."
+    },
+    "users": {
+      "schema": "User",
+      "description": "Team member profiles."
+    }
+  }
+}
